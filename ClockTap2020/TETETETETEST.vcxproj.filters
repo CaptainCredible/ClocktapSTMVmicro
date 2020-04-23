@@ -20,11 +20,6 @@
     </None>
     <None Include="handleButts.ino" />
     <None Include="handleTapOut.ino" />
-    <None Include="TETETETETEST.ino" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="__vm\.TETETETETEST.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <None Include="ClockTap2020.ino" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C5F80730-F44F-4478-BDAE-6634EFC2CA88}</ProjectGuid>
     <RootNamespace>TETETETETEST</RootNamespace>
-    <ProjectName>TETETETETEST</ProjectName>
+    <ProjectName>ClockTap2020</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -77,10 +77,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\TETETETETEST;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\arduino_midi_library\src;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\libraries\USBComposite;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple\avr;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple\libmaple;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple\stm32f1;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\variants\generic_stm32f103c;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\include;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\stm32f1\include;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\usb\stm32f1;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\usb\usb_lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>$(ProjectDir)__vm\.TETETETETEST.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ClockTap2020;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\libraries\USBComposite;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\arduino_midi_library-master\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple\avr;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple\libmaple;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple\stm32f1;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\variants\generic_stm32f103c;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\stm32f1\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\usb\stm32f1;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\usb\usb_lib;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\arduino\tools\CMSIS\4.5.0\CMSIS\Core\Include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ProjectDir)__vm\.ClockTap2020.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
-      <PreprocessorDefinitions>_VMDEBUG=1;DEBUG_LEVEL=DEBUG_NONE;BOARD_generic_stm32f103c;VECT_TAB_ADDR=0x8000000;ERROR_LED_PORT=GPIOC;ERROR_LED_PIN=13;F_CPU=48000000L;ARDUINO=108012;ARDUINO_GENERIC_STM32F103C;ARDUINO_ARCH_STM32F1;CONFIG_MAPLE_MINI_NO_DISABLE_DEBUG=1;SERIAL_USB;GENERIC_BOOTLOADER;MCU_STM32F103C8;__STM32F1__;ARDUINO_ARCH_STM32;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_VMDEBUG=1;DEBUG_LEVEL=DEBUG_NONE;BOARD_generic_stm32f103c;VECT_TAB_ADDR=0x8000000;ERROR_LED_PORT=GPIOC;ERROR_LED_PIN=13;F_CPU=72000000L;ARDUINO=108012;ARDUINO_GENERIC_STM32F103C;ARDUINO_ARCH_STM32F1;CONFIG_MAPLE_MINI_NO_DISABLE_DEBUG=1;SERIAL_USB;GENERIC_BOOTLOADER;MCU_STM32F103C8;__STM32F1__;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -93,9 +93,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\TETETETETEST;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\libraries\USBComposite;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\arduino_midi_library\src;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple\avr;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple\libmaple;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\cores\maple\stm32f1;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\variants\generic_stm32f103c;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\include;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\stm32f1\include;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\usb\stm32f1;$(ProjectDir)..\..\..\..\Documents\Arduino\hardware\Arduino_STM32-1.0.0\STM32F1\system\libmaple\usb\usb_lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\TETETETETEST;$(ProjectDir)..\..\..\..\Documents\Arduino\libraries\arduino_midi_library-master\src;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.18\libraries\USBComposite;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\libraries\USBComposite;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple\avr;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple\libmaple;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\cores\maple\stm32f1;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\variants\generic_stm32f103c;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\stm32f1\include;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\usb\stm32f1;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\stm32duino\hardware\STM32F1\2020.4.23\system\libmaple\usb\usb_lib;$(ProjectDir)..\..\..\..\AppData\Local\arduino15\packages\arduino\tools\CMSIS\4.5.0\CMSIS\Core\Include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ProjectDir)__vm\.TETETETETEST.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <PreprocessorDefinitions>DEBUG_LEVEL=DEBUG_NONE;BOARD_generic_stm32f103c;VECT_TAB_ADDR=0x8000000;ERROR_LED_PORT=GPIOC;ERROR_LED_PIN=13;F_CPU=48000000L;ARDUINO=108012;ARDUINO_GENERIC_STM32F103C;ARDUINO_ARCH_STM32F1;CONFIG_MAPLE_MINI_NO_DISABLE_DEBUG=1;SERIAL_USB;GENERIC_BOOTLOADER;MCU_STM32F103C8;__STM32F1__;ARDUINO_ARCH_STM32;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG_LEVEL=DEBUG_NONE;BOARD_generic_stm32f103c;VECT_TAB_ADDR=0x8000000;ERROR_LED_PORT=GPIOC;ERROR_LED_PIN=13;F_CPU=72000000L;ARDUINO=108012;ARDUINO_GENERIC_STM32F103C;ARDUINO_ARCH_STM32F1;CONFIG_MAPLE_MINI_NO_DISABLE_DEBUG=1;SERIAL_USB;GENERIC_BOOTLOADER;MCU_STM32F103C8;__STM32F1__;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -116,7 +116,7 @@
     <None Include="handleTapOut.ino">
       <FileType>CppCode</FileType>
     </None>
-    <None Include="TETETETETEST.ino">
+    <None Include="ClockTap2020.ino">
       <FileType>CppCode</FileType>
     </None>
   </ItemGroup>
@@ -125,14 +125,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.TETETETETEST.vsarduino.h" />
+    <ClInclude Include="__vm\.ClockTap2020.vsarduino.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties arduino.upload.port="COM101" config.Debug.customdebug_Arduino_STM32-1_0_0_genericSTM32F103C_debugger_type="none" custom_Arduino_STM32-1_0_0_genericSTM32F103C_cpu_speed="speed_48mhz" />
+      <UserProperties config.Debug.customdebug_stm32duino_genericSTM32F103C_debugger_type="universal" config.Debug.customdebug_Arduino_STM32-1_0_0_genericSTM32F103C_debugger_type="none" arduino.upload.port="COM101" custom_Arduino_STM32-1_0_0_genericSTM32F103C_cpu_speed="speed_48mhz" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>
