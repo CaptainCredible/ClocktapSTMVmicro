@@ -1,7 +1,7 @@
 //LATEST VERSION (LOL, thats a stupid thing to put at the top of a file)
 /*
   CLOCK TO TAP
-  Uses STM32DUINO and arpuss USBMIDI library, oh and MIDI library (by Francois Best)
+  Uses STM32DUINO and arpuss USB library (now included in STM32DUINO CORE), and MIDI library (by Francois Best)
 */
 
 
@@ -12,13 +12,20 @@
 
 //#include <USBMIDI.h>
 
-#define tapIn PB10
-byte clockLengths[4] = { 24, 24, 24, 24 }; //24 = 4/4   16 = triplets
-unsigned long clockIncrement = 0;
-byte clockDivisors[4] = { 1, 1, 1, 1 };
-bool taps[4] = { false, false, false, false };
-bool isRunning = false;
-bool clockUpdated = false;
+
+//PINS
+
+#define tapIn PA8
+const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
+//const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
+const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
+#define gateA PA3
+#define gateB PA0
+const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using last two entries, lazy
+
+
+//VARIABLES
+
 bool intClock = true;
 bool notReceivedClockSinceBoot = true;
 bool littleButtStates[4] = { true, true, true, true };
@@ -32,11 +39,6 @@ bool flippedTrips[5] = { false, false, false, false, false }; //last one is actu
 unsigned long tripTimer[5] = { 0, 0, 0, 0, 0 }; // last on used for taptempo hold
 bool triplets[4] = { false, false, false, false };
 //unsigned int bigButtTimer[4] = { 0,0,0,0 };
-const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
-const byte bigButtPins[4] = { PB8,  PB7,PB6, PA10 };
-#define gateA PA3
-#define gateB PA0
-const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using last two entries, lazy
 byte waitLedSelect = 0;
 unsigned long waitTimer = 0;
 //int tapTimer = 0;
@@ -45,24 +47,7 @@ unsigned long intClockTimer = 0;
 int tock = 0;
 bool overrideMidiClock = false;
 
-void clockTick() {
 
-    clockIncrement++;
-    handleTaps();
-}
-
-void handleStop() {
-    //Serial.println("STOP RESET");
-    isRunning = false;
-    allLedsOff();
-}
-
-void handleStart() {
-    notReceivedClockSinceBoot = false;
-    isRunning = true;
-    clockIncrement = 0;
-    handleTaps();
-}
 
 void MIDIClockTick() {
     if (!overrideMidiClock) {
@@ -72,9 +57,6 @@ void MIDIClockTick() {
     }
 
 }
-
-
-
 
 void MIDIStop() {
     if (!overrideMidiClock) {
@@ -90,12 +72,13 @@ void MIDIStart() {
         handleStart();
     }
 }
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, HWMIDI);
 
 class myMidi : public USBMIDI {
-    //MIDI.setHandleClock(MIDIClockTick);
-    //MIDI.setHandleStart(MIDIStart);
-    //MIDI.setHandleStop(handleStop);
 
+    virtual void handleNoteOn() {
+        //HWMIDI.sendNoteOn(70,127,1);
+    }
     virtual void handleSync() {
         MIDIClockTick();
     }
@@ -113,7 +96,7 @@ class myMidi : public USBMIDI {
 };
 
 myMidi umidi;
-
+USBCompositeSerial CompositeSerial;
 
 
 
@@ -135,8 +118,9 @@ myMidi umidi;
 //virtual void handleReset(void);
 
 
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, MIDI);
-
+void checkCompiler() {
+    allLedsOn();
+}
 
 
 
@@ -161,24 +145,18 @@ bool smallDebounceReady[4] = { true, true, true, true };
 const int debounceThresh = 10;
 bool inversion[5] = { false, false, false, false, false };
 
-
-
 void setup() {
-    pinMode(ledA, OUTPUT);
-    
     USBComposite.setProductId(0x0030);
     USBComposite.setProductString("clockTap");
     umidi.registerComponent();
     CompositeSerial.registerComponent();
     USBComposite.begin();
-    handleStart();
-    
-
-    MIDI.setHandleClock(MIDIClockTick);
-    MIDI.setHandleStart(MIDIStart);
-    MIDI.setHandleStop(handleStop);
-    MIDI.begin(MIDI_CHANNEL_OMNI); // Initiate MIDI communications, listen to all channels
-
+    HWMIDI.setHandleClock(MIDIClockTick);
+    HWMIDI.setHandleStart(MIDIStart);
+    HWMIDI.setHandleStop(handleStop);
+    HWMIDI.begin(MIDI_CHANNEL_OMNI); // Initiate MIDI communications, listen to all channels
+    HWMIDI.turnThruOff();
+    handleStart(); //sets up clockTimers and stuff
     for (int i = 0; i < 4; i++) {
         pinMode(outs[i], OUTPUT);
         pinMode(LEDs[i], OUTPUT);
@@ -215,13 +193,9 @@ void waiting4clock() {
     }
 }
 
-
 void handleIntClock() {
     if (tapTimer > 0) {
-        //if (millis() - intClockTimer > tapTimer>>3) {
         if (millis() - intClockTimer > clockStepTimer) {
-            //tock++;
-            ////Serial.println(tock);
             clockTick();
             intClockTimer = millis();
         }
@@ -238,46 +212,45 @@ void lightScroll() {
     }
 }
 
+byte clockLengths[4] = { 24, 24, 24, 24 }; //24 = 4/4   16 = triplets
+unsigned long clockIncrement = 0;
+byte clockDivisors[4] = { 1, 1, 1, 1 };
+bool taps[4] = { false, false, false, false };
+bool isRunning = false;
+bool clockUpdated = false;
+void clockTick() {
+    clockIncrement++;
+    sendMidiClockTick();
+    //CompositeSerial.println(clockIncrement);
+    handleTapOut();
+}
 
+void sendMidiClockTick() {
+    HWMIDI.sendRealTime(midi::Clock);
+    umidi.sendSync();
+}
 
+void sendMidiStart() {
+    HWMIDI.sendRealTime(midi::Start);
+    umidi.sendStart();
+}
 
+void handleStop() {
+    //Serial.println("STOP RESET");
+    isRunning = false;
+    allLedsOff();
+}
+
+void handleStart() {  //sets up clockTimers and stuff
+    notReceivedClockSinceBoot = false;
+    isRunning = true;
+    clockIncrement = 0;
+    handleTapOut();
+    sendMidiStart();
+}
 
 byte tapBlinkLength = 3;
 int localTapTimer[4] = { 0, 0, 0, 0 };
-void handleTaps() {
-    for (int i = 0; i < 4; i++) {
-
-        localTapTimer[i] = clockIncrement % clockLengths[i];
-        //  //Serial.println(taps[i]);
-
-
-        if (localTapTimer[i] == 0) {
-            taps[i] = true;
-            //CompositeSerial.print("TAP! ");
-            //CompositeSerial.println(i);
-            digitalWrite(outs[i], !inversion[i]);
-            if (i > 1) {
-                digitalWrite(gateOuts[i], HIGH);
-            }
-            if (!bigButtStates[i]) {
-                digitalWrite(LEDs[i], !inversion[i]);
-            }
-        }
-        else if (localTapTimer[i] == tapBlinkLength) {
-            taps[i] = false;
-            digitalWrite(outs[i], inversion[i]);
-            if (i > 1) {
-                digitalWrite(gateOuts[i], LOW);
-            }
-            if (!bigButtStates[i]) {
-                digitalWrite(LEDs[i], inversion[i]);
-            }
-        }
-    }
-    delay(1000);
-   // CompositeSerial.println("OK!");
-   // CompositeSerial.flush();
-}
 
 
 int aliveCounter = 0;
@@ -286,15 +259,11 @@ void loop() {
     if (notReceivedClockSinceBoot) {
         //waiting4clock();
     }
-
     if (intClock) {
         handleIntClock();
     }
-
-    MIDI.read();
+    HWMIDI.read();
     umidi.poll();
-
-
     handleButts();
     handleBlinks();
 }
@@ -365,9 +334,3 @@ void handleBlinks() {
         }
     }
 }
-
-
-
-
-
-

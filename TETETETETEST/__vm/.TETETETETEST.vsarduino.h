@@ -13,6 +13,7 @@
 
 #ifndef _VSARDUINO_H_
 #define _VSARDUINO_H_
+#define _VMDEBUG 1
 #define DEBUG_LEVEL DEBUG_NONE
 #define BOARD_generic_stm32f103c
 #define VECT_TAB_ADDR 0x8000000
@@ -56,5 +57,6 @@ typedef bool _Bool;
 #define cli()
 #include "TETETETETEST.ino"
 #include "handleButts.ino"
+#include "handleTapOut.ino"
 #endif
 #endif

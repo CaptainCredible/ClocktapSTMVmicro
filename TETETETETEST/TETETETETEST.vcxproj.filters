@@ -15,11 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TETETETETEST.ino" />
     <None Include="src\arduino folders read me.txt">
       <Filter>Misc Files</Filter>
     </None>
     <None Include="handleButts.ino" />
+    <None Include="handleTapOut.ino" />
+    <None Include="TETETETETEST.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.TETETETETEST.vsarduino.h">
