@@ -3,6 +3,28 @@ bool oldtapInState = false;
 bool tapInState = false;
 bool pedalHold = false;
 
+int currentRotaryValue = 0;
+int oldRotaryValue = 0;
+int currenRotarytRange = 800;
+
+void handleRotaryEncoder() {
+    {
+        static uint32_t count;
+        static uint32_t prevCount;
+        count = currentRotaryValue;
+        prevCount = oldRotaryValue;
+        if (count != prevCount)
+        {
+            oldRotaryValue = count;
+            CompositeSerial.print(F("Count: "));
+            CompositeSerial.println(count);
+
+
+        }
+    }
+}
+
+
 void handleButts() {
     handleTapInput();
     /*
@@ -45,6 +67,8 @@ void handleButts() {
      }
      */
 
+    
+
     for (int i = 0; i < 4; i++) {
         oldBigButtStates[i] = bigButtStates[i];
         if (bigDebounceReady[i]) {
@@ -65,15 +89,16 @@ void handleButts() {
             flippedTrips[i] = false;
             bigDebounceTimers[i] = millis();
             bigDebounceReady[i] = false;
-            //HWMIDI.sendNoteOn(40+i, 127, 1);
-            //HWMIDI.sendNoteOff(40+i, 127, 1);
+
             if ((i == 0) && intClock) {  //do this if we are handling last butt and we are in intClock
               //CompositeSerial.println("TAP IN");
                 lastTimeOfTap = timeOfTap;
                 timeOfTap = millis();
-                if (timeOfTap - lastTimeOfTap < 3000) { //if less than 3 sec since last tap
+                if (timeOfTap - lastTimeOfTap < 1500) { //if less than 1.5 sec since last tap
                     tapTimer = timeOfTap - lastTimeOfTap;
                     clockStepTimer = tapTimer / 24;
+                    tempo = 60000 / tapTimer;
+                    printToTopMiddle(tempo);
                     handleStart();
                 }
             }

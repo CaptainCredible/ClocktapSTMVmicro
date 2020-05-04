@@ -9,23 +9,30 @@
 
 #include <MIDI.h>
 #include <USBComposite.h>
-
-//#include <USBMIDI.h>
-
+#include <U8x8lib.h>
+U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 
 //PINS
 
+
+
+
+#define ENC_CLK PB8
+#define ENC_DATA PB9
+#define BUTTON  PB15
 #define tapIn PA8
-const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
+//const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
 //const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
-const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
+const byte bigButtPins[4] = { PB4, PA2,PA15, PA10 };
+const byte rotaryClick = PB5;
 #define gateA PA3
 #define gateB PA0
 const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using last two entries, lazy
 
 
 //VARIABLES
-
+int encoderCount = 500;
+int tempo = 120;
 bool intClock = true;
 bool notReceivedClockSinceBoot = true;
 bool littleButtStates[4] = { true, true, true, true };
@@ -117,6 +124,22 @@ USBCompositeSerial CompositeSerial;
 //virtual void handleActiveSense(void);
 //virtual void handleReset(void);
 
+// TO BE CALLED FROM SYSTICK INTERRUPT:
+void encoder1_read(void)
+{
+    volatile static uint8_t ABs = 0;
+    ABs = (ABs << 2) & 0x0f; //left 2 bits now contain the previous AB key read-out;
+    ABs |= (digitalRead(ENC_CLK) << 1) | digitalRead(ENC_DATA);
+    switch (ABs)
+    {
+    case 0x0d:
+        encoderCount++;
+        break;
+    case 0x0e:
+        encoderCount--;
+        break;
+    }
+}
 
 void checkCompiler() {
     allLedsOn();
@@ -146,6 +169,13 @@ const int debounceThresh = 10;
 bool inversion[5] = { false, false, false, false, false };
 
 void setup() {
+    //ROTARY ENCODER
+    pinMode(ENC_CLK, INPUT_PULLUP);
+    pinMode(ENC_DATA, INPUT_PULLUP);
+    encoderCount = 100;
+    systick_attach_callback(&encoder1_read); // attach encoder_read to the systick interrupt
+
+    //USB
     USBComposite.setProductId(0x0030);
     USBComposite.setProductString("clockTap");
     umidi.registerComponent();
@@ -156,11 +186,13 @@ void setup() {
     HWMIDI.setHandleStop(handleStop);
     HWMIDI.begin(MIDI_CHANNEL_OMNI); // Initiate MIDI communications, listen to all channels
     HWMIDI.turnThruOff();
+    
+    //TIMEKEEPING
     handleStart(); //sets up clockTimers and stuff
     for (int i = 0; i < 4; i++) {
         pinMode(outs[i], OUTPUT);
         pinMode(LEDs[i], OUTPUT);
-        pinMode(littleButtPins[i], INPUT_PULLUP);
+        //pinMode(littleButtPins[i], INPUT_PULLUP);
         pinMode(bigButtPins[i], INPUT_PULLUP);
         pinMode(gateOuts[i], OUTPUT);
         digitalWrite(LEDs[i], HIGH);
@@ -171,6 +203,12 @@ void setup() {
     }
     delay(500);
     allLedsOff();
+
+    //DISPLAY
+    u8x8.begin();
+    u8x8.setPowerSave(0);
+    u8x8.setFont(u8x8_font_chroma48medium8_r);
+    u8x8.drawString(0, 0, "Hello World!");    
 }
 
 void allLedsOn() {
@@ -184,7 +222,6 @@ void allLedsOff() {
         digitalWrite(LEDs[i], LOW);
     }
 }
-
 
 void waiting4clock() {
     if (tapTimer > 0) {
@@ -265,6 +302,7 @@ void loop() {
     HWMIDI.read();
     umidi.poll();
     handleButts();
+    handleRotaryEncoder();
     handleBlinks();
 }
 

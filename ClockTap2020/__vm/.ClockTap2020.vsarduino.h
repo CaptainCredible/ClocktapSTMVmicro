@@ -6,14 +6,13 @@
 			All non-arduino files created by visual micro and all visual studio project or solution files can be freely deleted and are not required to compile a sketch (do not delete your own code!).
 			Note: debugger breakpoints are stored in '.sln' or '.asln' files, knowledge of last uploaded breakpoints is stored in the upload.vmps.xml file. Both files are required to continue a previous debug session without needing to compile and upload again
 	
-	Hardware: Generic STM32F103C series, Platform=STM32F1, Package=stm32duino
+	Hardware: Generic STM32F103C series, Platform=STM32F1, Package=Arduino_STM32
 */
 
 #if defined(_VMICRO_INTELLISENSE)
 
 #ifndef _VSARDUINO_H_
 #define _VSARDUINO_H_
-#define _VMDEBUG 1
 #define DEBUG_LEVEL DEBUG_NONE
 #define BOARD_generic_stm32f103c
 #define VECT_TAB_ADDR 0x8000000
@@ -56,6 +55,7 @@ typedef bool _Bool;
 #define cli()
 #include "ClockTap2020.ino"
 #include "handleButts.ino"
+#include "handleDisplay.ino"
 #include "handleTapOut.ino"
 #endif
 #endif
