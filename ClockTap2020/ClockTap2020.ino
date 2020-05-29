@@ -208,7 +208,8 @@ void setup() {
     u8x8.begin();
     u8x8.setPowerSave(0);
     u8x8.setFont(u8x8_font_chroma48medium8_r);
-    u8x8.drawString(0, 0, "Hello World!");    
+    u8x8.drawString(0, 0, "Hello World!");
+    CompositeSerial.println("reddy");
 }
 
 void allLedsOn() {
@@ -291,10 +292,13 @@ int localTapTimer[4] = { 0, 0, 0, 0 };
 
 
 int aliveCounter = 0;
+
+
+
 void loop() {
     aliveCounter++;
     if (notReceivedClockSinceBoot) {
-        //waiting4clock();
+      //  waiting4clock();
     }
     if (intClock) {
         handleIntClock();
@@ -303,7 +307,12 @@ void loop() {
     umidi.poll();
     handleButts();
     handleRotaryEncoder();
-    handleBlinks();
+    //handleBlinks();
+    
+
+    if (aliveCounter == 100) {
+        CompositeSerial.println("OK!");
+    }
 }
 
 

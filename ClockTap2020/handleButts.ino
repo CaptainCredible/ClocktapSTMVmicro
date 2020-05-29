@@ -27,47 +27,7 @@ void handleRotaryEncoder() {
 
 void handleButts() {
     handleTapInput();
-    /*
-       // HANDLE LITTLE BUTTONS
-       for (int i = 0; i < 4; i++) {
-       oldLittleButtStates[i] = littleButtStates[i];
-
-       if (smallDebounceReady[i]) {
-         littleButtStates[i] = !digitalRead(littleButtPins[i]);
-       }
-       else {
-         debounce(0, i);
-       }
-
-       if (littleButtStates[i] && !oldLittleButtStates[i]) {
-         //    Serial.print("small button ");
-         //    Serial.println(i);
-         inversion[i] = !inversion[i];
-         smallDebounceTimers[i] = millis();
-         smallDebounceReady[i] = false;
-
-
-         if (localTapTimer[i] > tapBlinkLength) { //set LED imediately to show respect
-
-           digitalWrite(LEDs[i], inversion[i]);
-
-         }
-         else {
-           digitalWrite(LEDs[i], !inversion[i]);
-         }
-         //Serial.print("inversion ");
-         //Serial.print(i);
-         //Serial.print(" = ");
-         //Serial.println(inversion[i]);
-       }
-       else if (!littleButtStates[i] && oldLittleButtStates[i]) {
-         smallDebounceTimers[i] = millis();
-         smallDebounceReady[i] = false;
-       }
-     }
-     */
-
-    
+    //CompositeSerial.println(digitalRead(PB4));
 
     for (int i = 0; i < 4; i++) {
         oldBigButtStates[i] = bigButtStates[i];
