@@ -50,23 +50,12 @@ void handleButts() {
             bigDebounceTimers[i] = millis();
             bigDebounceReady[i] = false;
 
-            if ((i == 0) && intClock) {  //do this if we are handling last butt and we are in intClock
-              //CompositeSerial.println("TAP IN");
-                lastTimeOfTap = timeOfTap;
-                timeOfTap = millis();
-                if (timeOfTap - lastTimeOfTap < 1500) { //if less than 1.5 sec since last tap
-                    tapTimer = timeOfTap - lastTimeOfTap;
-                    clockStepTimer = tapTimer / 24;
-                    tempo = 60000 / tapTimer;
-                    printToTopMiddle(tempo);
-                    handleStart();
-                }
-            }
-            else {
+            
+            
                 clockDivisors[i]++;
                 clockDivisors[i] = clockDivisors[i] % 4;
                 setClockLengths(i);
-            }
+            
 
         }
         else if (!bigButtStates[i] && oldBigButtStates[i]) {
@@ -107,6 +96,20 @@ void handleButts() {
 void handleTapInput() {
     int pedIn = 4;
 
+    /*
+                  //CompositeSerial.println("TAP IN");
+                lastTimeOfTap = timeOfTap;
+                timeOfTap = millis();
+                if (timeOfTap - lastTimeOfTap < 1500) { //if less than 1.5 sec since last tap
+                    tapTimer = timeOfTap - lastTimeOfTap;
+                    clockStepTimer = tapTimer / 24;
+                    tempo = 60000 / tapTimer;
+                    printToTopMiddle(tempo);
+                    handleStart();
+                }
+    */
+
+    //CompositeSerial.println("handld");
     oldBigButtStates[pedIn] = bigButtStates[pedIn];
     if (bigDebounceReady[pedIn]) {
         bigButtStates[pedIn] = !digitalRead(tapIn);
@@ -115,9 +118,18 @@ void handleTapInput() {
         debounce(1, pedIn);
     }
 
+    //STILL SOME DEBOUNCE ISSUE HERE
+
+    //                 ON                          OFF
+    //                 _____________________________   _
+    //                 |                            | | |
+    //                 |                            | | |
+    //_________________|                            |_| |________________________________
+
     if (bigButtStates[pedIn] && !oldBigButtStates[pedIn]) {
         //digitalWrite(LEDs[pedIn], HIGH);
         CompositeSerial.print("PEDAL   ");
+        CompositeSerial.print(bigButtStates[pedIn]);
         tripTimer[pedIn] = millis();
         //flippedTrips[pedIn] = false;
         bigDebounceTimers[pedIn] = millis();

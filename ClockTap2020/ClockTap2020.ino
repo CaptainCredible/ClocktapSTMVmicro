@@ -201,6 +201,7 @@ void setup() {
         }
         delay(100);
     }
+    pinMode(tapIn, INPUT_PULLUP);
     delay(500);
     allLedsOff();
 
@@ -310,8 +311,8 @@ void loop() {
     //handleBlinks();
     
 
-    if (aliveCounter == 100) {
-        CompositeSerial.println("OK!");
+    if (aliveCounter == 10000) {
+        //u8x8.clearDisplay();
     }
 }
 
@@ -351,7 +352,7 @@ void debounce(bool bigSmall, byte number) {
             smallDebounceReady[number] = true;
             ////Serial.println("small debounce DONE");
         }
-    }
+    } 
 }
 
 unsigned long blinkTimers[4];
