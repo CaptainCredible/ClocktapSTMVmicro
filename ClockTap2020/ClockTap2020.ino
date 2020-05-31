@@ -23,7 +23,7 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 #define tapIn PA8
 //const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
 //const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
-const byte bigButtPins[4] = { PB4, PA2,PA15, PA10 };
+const byte bigButtPins[4] = { PA2, PB4,PA15, PA10 };
 const byte rotaryClick = PB5;
 #define gateA PA3
 #define gateB PA0
@@ -254,6 +254,7 @@ void lightScroll() {
 byte clockLengths[4] = { 24, 24, 24, 24 }; //24 = 4/4   16 = triplets
 unsigned long clockIncrement = 0;
 byte clockDivisors[4] = { 1, 1, 1, 1 };
+byte oldClockDivisors[4] = { 1, 1, 1, 1 };
 bool taps[4] = { false, false, false, false };
 bool isRunning = false;
 bool clockUpdated = false;
@@ -309,11 +310,11 @@ void loop() {
     handleButts();
     handleRotaryEncoder();
     //handleBlinks();
-    
-
     if (aliveCounter == 10000) {
         //u8x8.clearDisplay();
     }
+
+    displayOverviewPage();
 }
 
 

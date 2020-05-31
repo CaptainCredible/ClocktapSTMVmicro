@@ -53,7 +53,7 @@ void handleButts() {
             
             
                 clockDivisors[i]++;
-                clockDivisors[i] = clockDivisors[i] % 4;
+                clockDivisors[i] = clockDivisors[i] % 5;
                 setClockLengths(i);
             
 
