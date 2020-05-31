@@ -94,7 +94,7 @@ void handleButts() {
 }
 
 void handleTapInput() {
-    int pedIn = 4;
+    int pedIn = 4; //pedal pins position in debounce array
 
     /*
                   //CompositeSerial.println("TAP IN");
@@ -125,6 +125,11 @@ void handleTapInput() {
     //                 |                            | | |
     //                 |                            | | |
     //_________________|                            |_| |________________________________
+    if (bigButtStates[pedIn] != oldBigButtStates[pedIn]) { //if there is a change, activate debounce
+        bigDebounceTimers[pedIn] = millis();
+        bigDebounceReady[pedIn] = false;
+    }
+    
 
     if (bigButtStates[pedIn] && !oldBigButtStates[pedIn]) {
         //digitalWrite(LEDs[pedIn], HIGH);
@@ -132,8 +137,7 @@ void handleTapInput() {
         CompositeSerial.print(bigButtStates[pedIn]);
         tripTimer[pedIn] = millis();
         //flippedTrips[pedIn] = false;
-        bigDebounceTimers[pedIn] = millis();
-        bigDebounceReady[pedIn] = false;
+        
 
         if ((pedIn == 4) && intClock) {  //don't do this if we are handling last butt and we are in intClock
             lastTimeOfTap = timeOfTap;
