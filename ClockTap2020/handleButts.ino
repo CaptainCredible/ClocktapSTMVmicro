@@ -55,7 +55,7 @@ void handleButts() {
                 clockDivisors[i]++;
                 clockDivisors[i] = clockDivisors[i] % 5;
                 setClockLengths(i);
-            
+                
 
         }
         else if (!bigButtStates[i] && oldBigButtStates[i]) {
@@ -145,6 +145,7 @@ void handleTapInput() {
             if (timeOfTap - lastTimeOfTap < 3000) { //if less than 3 sec since last tap
                 tapTimer = timeOfTap - lastTimeOfTap;
                 clockStepTimer = tapTimer / 24;
+                tempo = 60000 / tapTimer;
                 handleStart();
             }
         }

@@ -9,9 +9,16 @@
 
 #include <MIDI.h>
 #include <USBComposite.h>
-#include <U8x8lib.h>
-U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
+#include <U8g2lib.h>
 
+#ifdef U8X8_HAVE_HW_SPI
+#include <SPI.h>
+#endif
+#ifdef U8X8_HAVE_HW_I2C
+#include <Wire.h>
+#endif
+
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 //PINS
 
 
@@ -33,6 +40,7 @@ const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using la
 //VARIABLES
 int encoderCount = 500;
 int tempo = 120;
+int oldTempo = 0;
 bool intClock = true;
 bool notReceivedClockSinceBoot = true;
 bool littleButtStates[4] = { true, true, true, true };
@@ -202,14 +210,12 @@ void setup() {
         delay(100);
     }
     pinMode(tapIn, INPUT_PULLUP);
-    delay(500);
+    delay(100);
     allLedsOff();
 
     //DISPLAY
-    u8x8.begin();
-    u8x8.setPowerSave(0);
-    u8x8.setFont(u8x8_font_chroma48medium8_r);
-    u8x8.drawString(0, 0, "Hello World!");
+    u8g2.begin();
+    //u8g2.setPowerSave(0);
     CompositeSerial.println("reddy");
 }
 
@@ -254,7 +260,7 @@ void lightScroll() {
 byte clockLengths[4] = { 24, 24, 24, 24 }; //24 = 4/4   16 = triplets
 unsigned long clockIncrement = 0;
 byte clockDivisors[4] = { 1, 1, 1, 1 };
-byte oldClockDivisors[4] = { 1, 1, 1, 1 };
+byte displayedClockDivisors[4] = { 1, 1, 1, 1 };
 bool taps[4] = { false, false, false, false };
 bool isRunning = false;
 bool clockUpdated = false;
@@ -311,10 +317,10 @@ void loop() {
     handleRotaryEncoder();
     //handleBlinks();
     if (aliveCounter == 10000) {
-        //u8x8.clearDisplay();
+        //u8g2.clearDisplay();
     }
 
-    displayOverviewPage();
+    handleDisplay();
 }
 
 
