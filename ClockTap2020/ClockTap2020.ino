@@ -1,4 +1,4 @@
-//LATEST VERSION (LOL, thats a stupid thing to put at the top of a file)
+//EVEN MOST LATEST VERSION (LOL, thats a stupid thing to put at the top of a file)
 /*
   CLOCK TO TAP
   Uses STM32DUINO and arpuss USB library (now included in STM32DUINO CORE), and MIDI library (by Francois Best)
