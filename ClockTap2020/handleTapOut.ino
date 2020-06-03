@@ -1,13 +1,10 @@
 
 void handleTapOut() {
-    //CompositeSerial.println("TAP! ");
+    
     for (int i = 0; i < 4; i++) {
 
         localTapTimer[i] = clockIncrement % clockLengths[i];
-        //  //Serial.println(taps[i]);
-
-        //CompositeSerial.println(clockIncrement);
-
+        
         if (localTapTimer[i] == 0) {
 
             taps[i] = true;

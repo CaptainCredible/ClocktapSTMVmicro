@@ -23,8 +23,8 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 //PINS
 
 #define ENC_CLK PB8
-#define ENC_DATA PB9
-#define BUTTON  PB15
+#define ENC_DATA PB5
+#define BUTTON  PB9
 #define tapIn PA8
 //const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
 //const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
@@ -39,12 +39,21 @@ const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using la
 
 
 char subDivStrings[6][6] = {
-                         " 1",
-                         " 2",
-                         " 4",
-                         " 8",
+                         "1",
+                         "2",
+                         "4",
+                         "8",
                          "16",
                          "32"
+};
+
+char tripSubDivStrings[6][6] = {
+                         "1t",
+                         "2t",
+                         "4t",
+                         "8t",
+                         "16t",
+                         "32t"
 };
 
 char settingsNames[10][10] = {
@@ -61,13 +70,15 @@ char settingsNames[10][10] = {
 };
 
 int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
+int oldSettingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
 int settingsRanges[10] = { 666,4,0,0,0,0,0,0,0,0 };
 int currentSetting = 0;
 int encoderCount = 500;
 #define tempo 0
 //int tempo = 120;
-int oldTempo = 0;
+int displayedTempo = 0;
 bool intClock = true;
+long int timeSinceLastMidiMessage = 5000;
 bool notReceivedClockSinceBoot = true;
 bool littleButtStates[4] = { true, true, true, true };
 bool oldLittleButtStates[4] = { false, false, false, false };
@@ -87,6 +98,8 @@ unsigned long tapTimer = 0;
 unsigned long intClockTimer = 0;
 int tock = 0;
 bool overrideMidiClock = false;
+unsigned long oldExtClockTimer;
+unsigned long extClockTimer;
 
 
 
@@ -96,7 +109,7 @@ void MIDIClockTick() {
         notReceivedClockSinceBoot = false;
         clockTick();
     }
-
+    timeSinceLastMidiMessage = millis();
 }
 
 void MIDIStop() {
@@ -104,6 +117,7 @@ void MIDIStop() {
         notReceivedClockSinceBoot = false;
         handleStop();
     }
+    timeSinceLastMidiMessage = millis();
 }
 
 void MIDIStart() {
@@ -112,6 +126,7 @@ void MIDIStart() {
         notReceivedClockSinceBoot = false;
         handleStart();
     }
+    timeSinceLastMidiMessage = millis();
 }
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, HWMIDI);
 
@@ -159,7 +174,7 @@ USBCompositeSerial CompositeSerial;
 //virtual void handleReset(void);
 
 // TO BE CALLED FROM SYSTICK INTERRUPT:
-void encoder1_read(void)
+void mySystick(void)
 {
     volatile static uint8_t ABs = 0;
     ABs = (ABs << 2) & 0x0f; //left 2 bits now contain the previous AB key read-out;
@@ -167,11 +182,16 @@ void encoder1_read(void)
     switch (ABs)
     {
     case 0x0d:
-        encoderCount++;
+        settingsValues[currentSetting]++;
+        settingsValues[currentSetting] = settingsValues[currentSetting] % settingsRanges[currentSetting];
         break;
     case 0x0e:
-        encoderCount--;
+        settingsValues[currentSetting]--;
+        settingsValues[currentSetting] = settingsValues[currentSetting] % settingsRanges[currentSetting];
         break;
+    }
+    if (intClock) {
+        handleIntClock();
     }
 }
 
@@ -202,12 +222,14 @@ bool smallDebounceReady[4] = { true, true, true, true };
 const int debounceThresh = 10;
 bool inversion[5] = { false, false, false, false, false };
 
+
+
 void setup() {
     //ROTARY ENCODER
     pinMode(ENC_CLK, INPUT_PULLUP);
     pinMode(ENC_DATA, INPUT_PULLUP);
     encoderCount = 100;
-    systick_attach_callback(&encoder1_read); // attach encoder_read to the systick interrupt
+    systick_attach_callback(&mySystick); // attach encoder_read to the systick interrupt
 
     //USB
     USBComposite.setProductId(0x0030);
@@ -266,9 +288,11 @@ void waiting4clock() {
 
 void handleIntClock() {
     if (tapTimer > 0) {
-        if (millis() - intClockTimer > clockStepTimer) {
+        unsigned long NOW = millis();
+        if (NOW - intClockTimer > clockStepTimer) {
+            byte diff = (NOW - intClockTimer - clockStepTimer);
             clockTick();
-            intClockTimer = millis();
+            intClockTimer = millis()-diff;  //compensate for catching it late!
         }
     }
 }
@@ -285,15 +309,45 @@ void lightScroll() {
 
 byte clockLengths[4] = { 24, 24, 24, 24 }; //24 = 4/4   16 = triplets
 unsigned long clockIncrement = 0;
-byte clockDivisors[4] = { 1, 1, 1, 1 };
+byte clockDivisors[4] = { 0, 0, 0, 0 };
 byte displayedClockDivisors[4] = { 1, 1, 1, 1 };
 bool taps[4] = { false, false, false, false };
 bool isRunning = false;
 bool clockUpdated = false;
+
+unsigned int oldExtClockPeriods[4] = { 500, 500, 500, 500 };
 void clockTick() {
     clockIncrement++;
     sendMidiClockTick();
-    //CompositeSerial.println(clockIncrement);
+    
+    if (!intClock && (clockIncrement%12 == 0)) {
+        oldExtClockTimer = extClockTimer;
+        extClockTimer = millis();
+        //make a list of the previous clock periods
+        for (int i = 3; i > 0; i--) {
+            oldExtClockPeriods[i] = oldExtClockPeriods[i-1];
+        }
+        oldExtClockPeriods[0] = extClockTimer - oldExtClockTimer;
+        /*
+        CompositeSerial.print(oldExtClockPeriods[3]);
+        CompositeSerial.print(" ");
+        CompositeSerial.print(oldExtClockPeriods[2]);
+        CompositeSerial.print(" ");
+        CompositeSerial.print(oldExtClockPeriods[1]);
+        CompositeSerial.print(" ");
+        CompositeSerial.print(oldExtClockPeriods[0]);
+        CompositeSerial.println(" ");
+        */
+
+        // average them
+        unsigned int periodsSum = 0;
+        for (int i = 0; i < 4; i++) {
+            periodsSum += oldExtClockPeriods[i];
+        }
+        tapTimer = periodsSum >> 2; // divide by four  for averaged resultaveraging
+        settingsValues[tempo] = 30000 / tapTimer;
+        
+    }
     handleTapOut();
 }
 
@@ -334,9 +388,7 @@ void loop() {
     if (notReceivedClockSinceBoot) {
       //  waiting4clock();
     }
-    if (intClock) {
-        handleIntClock();
-    }
+// handle int clock moved to systick!
     HWMIDI.read();
     umidi.poll();
     handleButts();

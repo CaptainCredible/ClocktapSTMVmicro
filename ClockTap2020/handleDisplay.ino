@@ -1,9 +1,6 @@
 
 void handleDisplay() {
-	
-	
 	displayOverviewPage();
-	//CompositeSerial.println(tempo);
 }
 
 
@@ -19,7 +16,10 @@ void displayOverviewPage() {
 		if (clockDivisors[i] != displayedClockDivisors[i]) { updateDisplay = true; }
 	}
 
-	if (oldTempo != settingsValues[tempo]) { updateDisplay = true; }
+	if (displayedTempo != settingsValues[tempo]) { 
+		updateDisplay = true;
+		displayedTempo = settingsValues[tempo];
+	}
 
 
 
@@ -32,19 +32,18 @@ void displayOverviewPage() {
 		//u8g2.drawStr(0, 10, "Horld!");  // write something to the internal memory
 		//u8g2.drawStr(0, 20, "YOLO");
 
-		if (tempo > 99) {
+		if (settingsValues[tempo] > 199) {
 			u8g2.setCursor(34, 45);
+			
+		}
+		else if(settingsValues[tempo]>99){
+			u8g2.setCursor(32, 45);
 		}
 		else {
-			u8g2.setCursor(43, 45);
+			u8g2.setCursor(45, 45);
 		}
 		u8g2.print(settingsValues[tempo]);
-
 		u8g2.setCursor(0, 0);
-
-
-
-		oldTempo = settingsValues[tempo];
 	}
 	
 //timesigs display
@@ -57,11 +56,24 @@ void displayOverviewPage() {
 				//u8g2.setCursor((bitRead(i,0))*58,(bitRead(i,1))*120);
 				//u8g2.println(subDivStrings[clockDivisors[i]]);
 				//if()
-				byte myX = bitRead(i, 1) * 102;
+				byte myX = bitRead(i, 1) * 123;
 				byte myY = bitRead(i, 0) * 20;
-				u8g2.drawStr(myX,40+myY, subDivStrings[clockDivisors[i]]);
-				CompositeSerial.print("updated signature ");
-				CompositeSerial.println(i);
+				if (i > 1) { //we are drawing on the right
+					if (clockDivisors[i] > 3) {
+						myX -= 6;
+					}
+					if (triplets[i]) {
+						myX -= 6;
+					}
+				}
+
+				if (triplets[i]) {
+					u8g2.drawStr(myX, 40 + myY, tripSubDivStrings[clockDivisors[i]]);
+				}
+				else {
+
+					u8g2.drawStr(myX, 40 + myY, subDivStrings[clockDivisors[i]]);
+				}
 				displayedClockDivisors[i] = clockDivisors[i];
 			}
 }
