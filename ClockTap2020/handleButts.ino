@@ -18,8 +18,6 @@ void handleRotaryEncoder() {
             oldRotaryValue = count;
             CompositeSerial.print(F("Count: "));
             CompositeSerial.println(count);
-
-
         }
     }
 }
@@ -145,7 +143,8 @@ void handleTapInput() {
             if (timeOfTap - lastTimeOfTap < 3000) { //if less than 3 sec since last tap
                 tapTimer = timeOfTap - lastTimeOfTap;
                 clockStepTimer = tapTimer / 24;
-                tempo = 60000 / tapTimer;
+                settingsValues[tempo] = 60000 / tapTimer;
+                //tempo = 60000 / tapTimer;
                 handleStart();
             }
         }

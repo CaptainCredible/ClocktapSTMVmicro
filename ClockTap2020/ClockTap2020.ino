@@ -7,6 +7,7 @@
 
 //#include <ButtonDebounce.h>
 
+#include <U8x8lib.h>
 #include <MIDI.h>
 #include <USBComposite.h>
 #include <U8g2lib.h>
@@ -20,9 +21,6 @@
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 //PINS
-
-
-
 
 #define ENC_CLK PB8
 #define ENC_DATA PB9
@@ -38,8 +36,36 @@ const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using la
 
 
 //VARIABLES
+
+
+char subDivStrings[6][6] = {
+                         " 1",
+                         " 2",
+                         " 4",
+                         " 8",
+                         "16",
+                         "32"
+};
+
+char settingsNames[10][10] = {
+                         "tempo",
+                         "midi",
+                         "unused",
+                         "unused",
+                         "unused",
+                         "unused",
+                         "unused",
+                         "unused",
+                         "unused",
+                         "unused"
+};
+
+int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
+int settingsRanges[10] = { 666,4,0,0,0,0,0,0,0,0 };
+int currentSetting = 0;
 int encoderCount = 500;
-int tempo = 120;
+#define tempo 0
+//int tempo = 120;
 int oldTempo = 0;
 bool intClock = true;
 bool notReceivedClockSinceBoot = true;

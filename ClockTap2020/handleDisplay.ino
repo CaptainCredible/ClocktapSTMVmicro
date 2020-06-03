@@ -1,11 +1,3 @@
-char subDivStrings[6][6] = {
-						 " 1",
-						 " 2",
-						 " 4",
-						 " 8",
-						 "16",
-						 "32",
-};
 
 void handleDisplay() {
 	
@@ -27,7 +19,7 @@ void displayOverviewPage() {
 		if (clockDivisors[i] != displayedClockDivisors[i]) { updateDisplay = true; }
 	}
 
-	if (oldTempo != tempo) { updateDisplay = true; }
+	if (oldTempo != settingsValues[tempo]) { updateDisplay = true; }
 
 
 
@@ -46,13 +38,13 @@ void displayOverviewPage() {
 		else {
 			u8g2.setCursor(43, 45);
 		}
-		u8g2.print(tempo);
+		u8g2.print(settingsValues[tempo]);
 
 		u8g2.setCursor(0, 0);
 
 
 
-		oldTempo = tempo;
+		oldTempo = settingsValues[tempo];
 	}
 	
 //timesigs display
