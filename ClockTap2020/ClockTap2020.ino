@@ -69,6 +69,8 @@ char settingsNames[10][10] = {
                          "unused"
 };
 
+bool sendHWclock = true;
+bool sendUSBclock = true;
 int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
 int oldSettingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
 int settingsRanges[10] = { 666,4,0,0,0,0,0,0,0,0 };
@@ -128,6 +130,7 @@ void MIDIStart() {
     }
     timeSinceLastMidiMessage = millis();
 }
+
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, HWMIDI);
 
 class myMidi : public USBMIDI {
@@ -351,9 +354,17 @@ void clockTick() {
     handleTapOut();
 }
 
+
+
 void sendMidiClockTick() {
-    HWMIDI.sendRealTime(midi::Clock);
-    umidi.sendSync();
+    if (sendHWclock) {
+        HWMIDI.sendRealTime(midi::Clock);
+    }
+    if (sendUSBclock) {
+        umidi.sendSync();
+    }
+    
+    
 }
 
 void sendMidiStart() {
