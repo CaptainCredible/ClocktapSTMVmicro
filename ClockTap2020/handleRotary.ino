@@ -1,4 +1,4 @@
-void handleRotaryEncoder() {
+void handleRotaryEncoder() {   //checks if it needs to recalculate tempo
     {
         static uint32_t count;
         static uint32_t prevCount;

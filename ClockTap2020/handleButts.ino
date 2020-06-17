@@ -2,15 +2,39 @@
 bool oldtapInState = false;
 bool tapInState = false;
 bool pedalHold = false;
-
-//int currentRotaryValue = 0;
-//int oldRotaryValue = 0;
+unsigned long clickTimer = 0;
 int currenRotarytRange = 800;
+bool oldRotaryPush = false;
+byte clickCount = 0;
+void handleRotaryPush() {
+    bool nowRotaryPush = !digitalRead(rotaryClick);
+    if (nowRotaryPush && !oldRotaryPush) {
+        oldRotaryPush = nowRotaryPush;
+        click = true;
+        clickTimer = millis() + 100;
+}
+    if (!nowRotaryPush && millis()>clickTimer) { oldRotaryPush = false; }
 
-
+    if (click) {
+        switch (page) {
+        case 0:
+            page = 1;
+            break;
+        case 1:
+            page = settingsValues[1]; //select what menu page to open
+            updateDisplay = true;
+            break;
+        default:
+            break;
+        }
+        click = false;
+    }
+    
+}
 
 
 void handleButts() {
+    handleRotaryPush();
     handleTapInput();
     for (int i = 0; i < 4; i++) {
         oldBigButtStates[i] = bigButtStates[i];
@@ -22,25 +46,19 @@ void handleButts() {
         }
 
 
-
-
-
         if (bigButtStates[i] && !oldBigButtStates[i]) {
-            
             
             tripTimer[i] = millis();
             flippedTrips[i] = false;
             bigDebounceTimers[i] = millis();
             bigDebounceReady[i] = false;
-
-            
-            
+    
                 clockDivisors[i]++;
                 clockDivisors[i] = clockDivisors[i] % 5;
                 setClockLengths(i);
-                
 
         }
+
         else if (!bigButtStates[i] && oldBigButtStates[i]) {
             bigDebounceTimers[i] = millis();
             bigDebounceReady[i] = false;

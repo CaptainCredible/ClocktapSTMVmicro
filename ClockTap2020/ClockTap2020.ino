@@ -29,7 +29,7 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 //const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
 //const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
 const byte bigButtPins[4] = { PA2, PB4,PA15, PA10 };
-const byte rotaryClick = PB5;
+const byte rotaryClick = PB9;
 #define gateA PA3
 #define gateB PA0
 const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using last two entries, lazy
@@ -69,11 +69,41 @@ char settingsNames[10][10] = {
                          "unused"
 };
 
-bool sendHWclock = true;
+byte page = 0;
+
+
+/*
+IO STATUS
+
+EXTCLOCK AUTO        0
+EXTCLOCK USB         1
+EXCLOCK HW           2
+SEND MIDICLOCK USB   3
+SEND MIDICLOCK DIN   4
+
+*/
+
+#define EXTCLOCKAUTOBIT 0
+#define EXTCLOCKUSBBIT 1
+#define EXTCLOCKDINBIT 2
+#define SENDUSBBIT 3
+#define SENDDINBIT 4
+
+bool extClockAUto = true;
+bool extUSBclock = false;
+bool extDINclock = false;
+//bool sendUSBclock = false;
+//bool sendDINclock = false;
+bool updateDisplay = false;
+byte oldIOSettings = 0;
+byte IOSettings = 0b00000010;
+
+
+bool sendDINclock = true;
 bool sendUSBclock = true;
 int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
 int oldSettingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
-int settingsRanges[10] = { 666,4,0,0,0,0,0,0,0,0 };
+int settingsRanges[10] = { 667,6,0,0,0,0,0,0,0,0 };
 int currentSetting = 0;
 int encoderCount = 500;
 #define tempo 0
@@ -187,10 +217,15 @@ void mySystick(void)
     case 0x0d:
         settingsValues[currentSetting]++;
         settingsValues[currentSetting] = settingsValues[currentSetting] % settingsRanges[currentSetting];
+        
+
         break;
     case 0x0e:
         settingsValues[currentSetting]--;
         settingsValues[currentSetting] = settingsValues[currentSetting] % settingsRanges[currentSetting];
+        if (settingsValues[currentSetting] < 0) {
+            settingsValues[currentSetting] = settingsRanges[currentSetting] - 1;
+        }
         break;
     }
     if (intClock) {
@@ -224,13 +259,14 @@ bool bigDebounceReady[5] = { true, true, true, true, true };
 bool smallDebounceReady[4] = { true, true, true, true };
 const int debounceThresh = 10;
 bool inversion[5] = { false, false, false, false, false };
-
+bool click = false;
 
 
 void setup() {
     //ROTARY ENCODER
     pinMode(ENC_CLK, INPUT_PULLUP);
     pinMode(ENC_DATA, INPUT_PULLUP);
+    pinMode(rotaryClick,INPUT_PULLUP);
     encoderCount = 100;
     systick_attach_callback(&mySystick); // attach encoder_read to the systick interrupt
 
@@ -357,7 +393,7 @@ void clockTick() {
 
 
 void sendMidiClockTick() {
-    if (sendHWclock) {
+    if (sendDINclock) {
         HWMIDI.sendRealTime(midi::Clock);
     }
     if (sendUSBclock) {
