@@ -113,7 +113,7 @@
     <None Include="handleButts.ino">
       <FileType>CppCode</FileType>
     </None>
-    <None Include="handleDisplay.ino">
+    <None Include="handlePage.ino">
       <FileType>CppCode</FileType>
     </None>
     <None Include="handleRotary.ino">

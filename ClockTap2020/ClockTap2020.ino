@@ -56,18 +56,39 @@ char tripSubDivStrings[6][6] = {
                          "32t"
 };
 
-char settingsNames[10][10] = {
+char settingsNames[10][12] = {
                          "tempo",
-                         "midi",
-                         "unused",
-                         "unused",
-                         "unused",
-                         "unused",
-                         "unused",
-                         "unused",
+                         "menu cursor",
+                         "clock in", //0=auto, 1=USB 2=DIN 3=OFF
+                         "clock out", //0 = both, 1=USB, 2=DIN
+                         "foot mode", //0= tap, 1=resync
+                         "tap out", //bits are 0 for normal 1 for inverter
+                         "gate 1", //0 = always 1/1, 1 = slave to tapout 1
+                         "gate 2",
                          "unused",
                          "unused"
 };
+
+#define settingsValueTempo 0
+#define settingsValueMenuCursor 1
+#define settingsValueClockIn 2
+#define settingsValueClockOut 3
+#define settingsValueFootMode 4
+#define settingsValueTapOutBITS 5
+#define settingsValueGate1 6
+#define settingsValueGate2 7
+
+#define ClockSettingBoth 0 
+#define ClockSettingUSB 1 
+#define ClockSettingDIN 2 
+#define ClockSettingOFF 3 
+
+
+
+
+int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
+int oldSettingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
+int settingsRanges[10] = { 667,6,4,4,0,0,0,0,0,0 };
 
 byte page = 0;
 
@@ -89,9 +110,9 @@ SEND MIDICLOCK DIN   4
 #define SENDUSBBIT 3
 #define SENDDINBIT 4
 
-bool extClockAUto = true;
-bool extUSBclock = false;
-bool extDINclock = false;
+//bool extClockAUto = true;
+//bool extUSBclock = false;
+//bool extDINclock = false;
 //bool sendUSBclock = false;
 //bool sendDINclock = false;
 bool updateDisplay = false;
@@ -101,12 +122,10 @@ byte IOSettings = 0b00000010;
 
 bool sendDINclock = true;
 bool sendUSBclock = true;
-int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
-int oldSettingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
-int settingsRanges[10] = { 667,6,0,0,0,0,0,0,0,0 };
+
 int currentSetting = 0;
 int encoderCount = 500;
-#define tempo 0
+//#define tempo 0
 //int tempo = 120;
 int displayedTempo = 0;
 bool intClock = true;
@@ -384,7 +403,7 @@ void clockTick() {
             periodsSum += oldExtClockPeriods[i];
         }
         tapTimer = periodsSum >> 2; // divide by four  for averaged resultaveraging
-        settingsValues[tempo] = 30000 / tapTimer;
+        settingsValues[settingsValueTempo] = 30000 / tapTimer;
         
     }
     handleTapOut();
@@ -445,7 +464,7 @@ void loop() {
         //u8g2.clearDisplay();
     }
 
-    handleDisplay();
+    handlePage();
 }
 
 
@@ -513,4 +532,8 @@ void handleBlinks() {
             }
         }
     }
+}
+
+void saveData() {
+    page = 123;    //do the stuff on save page instead
 }

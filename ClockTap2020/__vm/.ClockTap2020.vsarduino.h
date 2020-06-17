@@ -55,7 +55,7 @@ typedef bool _Bool;
 #define cli()
 #include "ClockTap2020.ino"
 #include "handleButts.ino"
-#include "handleDisplay.ino"
+#include "handlePage.ino"
 #include "handleRotary.ino"
 #include "handleTapOut.ino"
 #endif

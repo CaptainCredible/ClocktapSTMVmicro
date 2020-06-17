@@ -7,8 +7,9 @@ void handleRotaryEncoder() {   //checks if it needs to recalculate tempo
         if (count != prevCount)
         {
             oldSettingsValues[currentSetting] = count;
-            if (currentSetting == tempo) {
-                tapTimer =  60000 / settingsValues[tempo];
+            updateDisplay = true;
+            if (currentSetting == settingsValueTempo) {
+                tapTimer =  60000 / settingsValues[settingsValueTempo];
                 clockStepTimer = tapTimer / 24;
             }
         }
