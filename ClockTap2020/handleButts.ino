@@ -17,12 +17,12 @@ void handleRotaryPush() {
 	if (!nowRotaryPush && millis() > clickTimer) { oldRotaryPush = false; }
 
 	if (click) {
-		CompositeSerial.println("click");
 		switch (page) {
 		case 0:
 			page = 1;
-			settingsValues[1] = 2;
+			settingsValues[1] = 0;
 			break;
+		
 		case 1: // we are selecting things in the menu
 			if (settingsValues[1] == 1) { //SAVE BuTTON
 				TIMETOSAVE = true;
@@ -36,7 +36,34 @@ void handleRotaryPush() {
 
 		case 2: //we are selecting clock input
 			applyIOsettings();
+			page = 0;
+			updateDisplay = true;
 			break;
+
+		case 3: //we are selecting clock output
+			applyIOsettings();
+			page = 0;
+			updateDisplay = true;
+			break;
+		case 4: //we are setting foot mode
+			page = 0;
+			updateDisplay = true;
+			break;
+		case 5: //we are setting tapout inversion
+			//page = 0;
+			if (settingsValues[5] == 4) {
+				page = 0;
+				updateDisplay = true;
+			}
+			else {
+				inversion[settingsValues[5]] = !inversion[settingsValues[5]];
+				updateDisplay = true;
+			}
+			break;
+		case 6:
+			page = 0;
+			updateDisplay = true;
+
 		default:
 			break;
 		}
@@ -49,7 +76,40 @@ void applyIOsettings() {
 	byte INSETTING = settingsValues[settingsValueClockIn];
 	switch (INSETTING) {
 	case ClockSettingBoth:
+		enableUSBclockIN = true;
+		enableDINclockIN = true;
+		break;
+	case ClockSettingDIN:
+		enableUSBclockIN = false;
+		enableDINclockIN = true;
+		break;
+	case ClockSettingUSB:
+		enableUSBclockIN = true;
+		enableDINclockIN = false;
+		break;
+	case ClockSettingOFF:
+		enableUSBclockIN = false;
+		enableDINclockIN = false;
+		break;
+	}
 
+	byte OUTSETTING = settingsValues[settingsValueClockOut];
+	switch (OUTSETTING) {
+	case ClockSettingBoth:
+		enableUSBclockOUT = true;
+		enableDINclockOUT = true;
+		break;
+	case ClockSettingDIN:
+		enableUSBclockOUT = false;
+		enableDINclockOUT = true;
+		break;
+	case ClockSettingUSB:
+		enableUSBclockOUT = true;
+		enableDINclockOUT = false;
+		break;
+	case ClockSettingOFF:
+		enableUSBclockOUT = false;
+		enableDINclockOUT = false;
 		break;
 	}
 }
@@ -143,50 +203,32 @@ void handleTapInput() {
 	}
 
 
-	if (bigButtStates[pedIn] && !oldBigButtStates[pedIn]) {
-		//digitalWrite(LEDs[pedIn], HIGH);
-
-		if (timeSinceLastMidiMessage > 1000) {
-			intClock = true;
-		}
-
-		tripTimer[pedIn] = millis();
-		//flippedTrips[pedIn] = false;
-		if (intClock) {
-			lastTimeOfTap = timeOfTap;
-			timeOfTap = millis();
-			if (timeOfTap - lastTimeOfTap < 3000) { //if less than 3 sec since last tap
-				tapTimer = timeOfTap - lastTimeOfTap;
-				clockStepTimer = tapTimer / 24;
-				settingsValues[settingsValueTempo] = 60000 / tapTimer;
-				//tempo = 60000 / tapTimer;
-				handleStart();
-			}
-		}
-	}
 	if (bigButtStates[pedIn]) {
 
-		if (millis() - tripTimer[pedIn] > 300 && !pedalHold) {
-			pedalHold = true;
-			//Serial.println(millis() - tripTimer[pedIn]);
-			//flippedTrips[pedIn] = !flippedTrips[pedIn];
-			overrideMidiClock = !overrideMidiClock;
-			if (overrideMidiClock) {
-				blink(0, 6);
-				blink(1, 6);
+		if (!oldBigButtStates[pedIn]) {
+			if (timeSinceLastMidiMessage > 1000) {
 				intClock = true;
-
 			}
-			else {
-				if (!notReceivedClockSinceBoot) { //dont turn intclock of if there is no other clock
-					intClock = false;
+			tripTimer[pedIn] = millis();
+			if (intClock) {
+				lastTimeOfTap = timeOfTap;
+				timeOfTap = micros();
+				if (timeOfTap - lastTimeOfTap < 3000000) { //if less than 3 sec since last tap
+					tapTimer = timeOfTap - lastTimeOfTap;
+					clockStepTimer = tapTimer / 24;
+					settingsValues[settingsValueTempo] = 60000000 / tapTimer;
+					//tempo = 60000 / tapTimer;
+					handleStart();
 				}
-				blink(2, 6);
-				blink(3, 6);
 			}
 		}
-	}
-	else {
+		if (millis() - tripTimer[pedIn] > 1000 && !pedalHold) {
+			pedalHold = true;
+			settingsValues[settingsValueFootMode]++;
+			settingsValues[settingsValueFootMode] % 2;
+		}
+
+	} else {
 		pedalHold = false;
 	}
 }

@@ -11,6 +11,8 @@
 #include <MIDI.h>
 #include <USBComposite.h>
 #include <U8g2lib.h>
+#include <EEPROM.h>
+
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -62,7 +64,7 @@ char settingsNames[10][12] = {
                          "clock in", //0=auto, 1=USB 2=DIN 3=OFF
                          "clock out", //0 = both, 1=USB, 2=DIN
                          "foot mode", //0= tap, 1=resync
-                         "tap out", //bits are 0 for normal 1 for inverter
+                         "tapo cursor", //cursor to set inversion inverter
                          "gate 1", //0 = always 1/1, 1 = slave to tapout 1
                          "gate 2",
                          "unused",
@@ -83,15 +85,14 @@ char settingsNames[10][12] = {
 #define ClockSettingDIN 2 
 #define ClockSettingOFF 3 
 
-
-
-
 int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
-int oldSettingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
-int settingsRanges[10] = { 667,6,4,4,0,0,0,0,0,0 };
+int oldSettingsValues[10] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+int settingsRanges[10] = { 667,7,4,4,2,5,0,0,0,0 };
 
 byte page = 0;
 
+#define FOOTMODETAP 0
+#define FOOTMODESYNC 1
 
 /*
 IO STATUS
@@ -128,6 +129,13 @@ int encoderCount = 500;
 //#define tempo 0
 //int tempo = 120;
 int displayedTempo = 0;
+
+bool enableUSBclockIN;
+bool enableDINclockIN;
+
+bool enableUSBclockOUT;
+bool enableDINclockOUT;
+
 bool intClock = true;
 long int timeSinceLastMidiMessage = 5000;
 bool notReceivedClockSinceBoot = true;
@@ -137,7 +145,7 @@ bool bigButtStates[5] = { true, true, true, true, true }; // last one is tapIn
 bool oldBigButtStates[5] = { false, false, false, false, false };
 unsigned long lastTimeOfTap = 0;
 unsigned long timeOfTap = 0;
-int clockStepTimer = 0;
+unsigned long clockStepTimer = 0;
 bool flippedTrips[5] = { false, false, false, false, false }; //last one is actualy override MIDI CLOCK
 unsigned long tripTimer[5] = { 0, 0, 0, 0, 0 }; // last on used for taptempo hold
 bool triplets[4] = { false, false, false, false };
@@ -155,29 +163,72 @@ unsigned long extClockTimer;
 
 
 void MIDIClockTick() {
-    if (!overrideMidiClock) {
-        intClock = false;
-        notReceivedClockSinceBoot = false;
-        clockTick();
+    if (enableDINclockIN) {
+        if (!overrideMidiClock) {
+            intClock = false;
+            notReceivedClockSinceBoot = false;
+            clockTick();
+        }
+        timeSinceLastMidiMessage = millis();
     }
-    timeSinceLastMidiMessage = millis();
+    
 }
 
 void MIDIStop() {
-    if (!overrideMidiClock) {
-        notReceivedClockSinceBoot = false;
-        handleStop();
+    if (enableDINclockIN) {
+        if (!overrideMidiClock) {
+            notReceivedClockSinceBoot = false;
+            handleStop();
+        }
     }
+    
     timeSinceLastMidiMessage = millis();
 }
 
 void MIDIStart() {
-    if (!overrideMidiClock) {
-        intClock = false;
-        notReceivedClockSinceBoot = false;
-        handleStart();
+    if (enableDINclockIN) {
+        if (!overrideMidiClock) {
+            intClock = false;
+            notReceivedClockSinceBoot = false;
+            handleStart();
+        }
+        timeSinceLastMidiMessage = millis();
     }
-    timeSinceLastMidiMessage = millis();
+    
+}
+
+void uMIDIClockTick() {
+    if (enableUSBclockIN) {
+        if (!overrideMidiClock) {
+            intClock = false;
+            notReceivedClockSinceBoot = false;
+            clockTick();
+        }
+        timeSinceLastMidiMessage = millis();
+    }
+}
+
+void uMIDIStop() {
+    if (enableUSBclockIN) {
+        if (!overrideMidiClock) {
+            notReceivedClockSinceBoot = false;
+            handleStop();
+        }
+        timeSinceLastMidiMessage = millis();
+    }
+    
+}
+
+void uMIDIStart() {
+    if (enableUSBclockIN) {
+        if (!overrideMidiClock) {
+            intClock = false;
+            notReceivedClockSinceBoot = false;
+            handleStart();
+        }
+        timeSinceLastMidiMessage = millis();
+    }
+    
 }
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial3, HWMIDI);
@@ -188,17 +239,17 @@ class myMidi : public USBMIDI {
         //HWMIDI.sendNoteOn(70,127,1);
     }
     virtual void handleSync() {
-        MIDIClockTick();
+        uMIDIClockTick();
     }
     virtual void handleStart() {
-        MIDIStart();
+        uMIDIStart();
     }
     virtual void handleContinue() {
-        MIDIStart();
+        uMIDIStart();
     }
 
     virtual void handleStop() {
-        MIDIStop();
+        uMIDIStop();
     }
     //virtual void handleReset(void);
 };
@@ -252,13 +303,7 @@ void mySystick(void)
     }
 }
 
-void checkCompiler() {
-    allLedsOn();
-}
 
-
-
-//these need fixing
 #define outA PA1 //A0
 #define outB PA4 //15
 #define outC PA5 //14
@@ -271,7 +316,6 @@ byte outs[4] = { outA, outB, outC, outD };
 #define ledD PB12 //D3
 byte LEDs[4] = { ledA, ledB, ledC, ledD };
 
-//tapInDebounceTimer = 0;
 unsigned long bigDebounceTimers[5] = { 0, 0, 0, 0, 0 };
 unsigned long smallDebounceTimers[4] = { 0, 0, 0, 0 };
 bool bigDebounceReady[5] = { true, true, true, true, true };
@@ -295,34 +339,44 @@ void setup() {
     umidi.registerComponent();
     CompositeSerial.registerComponent();
     USBComposite.begin();
+    
+    //DIN MIDI
     HWMIDI.setHandleClock(MIDIClockTick);
     HWMIDI.setHandleStart(MIDIStart);
     HWMIDI.setHandleStop(handleStop);
     HWMIDI.begin(MIDI_CHANNEL_OMNI); // Initiate MIDI communications, listen to all channels
     HWMIDI.turnThruOff();
     
+    //SCRIM
+    u8g2.begin();
+    u8g2.setFont(u8g2_font_crox5h_tf);
+    u8g2.drawStr(13, 40, "clockTAP");
+    u8g2.setFont(u8g2_font_DigitalDisco_tf);
+    u8g2.drawStr(70, 54, "v0.1");
+    u8g2.sendBuffer();
+    
     //TIMEKEEPING
     handleStart(); //sets up clockTimers and stuff
     for (int i = 0; i < 4; i++) {
         pinMode(outs[i], OUTPUT);
         pinMode(LEDs[i], OUTPUT);
-        //pinMode(littleButtPins[i], INPUT_PULLUP);
         pinMode(bigButtPins[i], INPUT_PULLUP);
         pinMode(gateOuts[i], OUTPUT);
         digitalWrite(LEDs[i], HIGH);
         if (i > 0) {
             digitalWrite(LEDs[i - 1], LOW);
         }
-        delay(100);
+        delay(200);
     }
     pinMode(tapIn, INPUT_PULLUP);
     delay(100);
     allLedsOff();
 
-    //DISPLAY
-    u8g2.begin();
-    //u8g2.setPowerSave(0);
-    CompositeSerial.println("reddy");
+    //load settings
+    load();
+
+    
+
 }
 
 void allLedsOn() {
@@ -344,7 +398,31 @@ void waiting4clock() {
     }
 }
 
+unsigned long diff = 0;
+unsigned long cnt = 1;
+
 void handleIntClock() {
+    if (tapTimer > 0) {
+        unsigned long NOW = micros();
+        if (NOW - intClockTimer > clockStepTimer) {
+ 
+
+
+            diff = ((NOW - intClockTimer) - clockStepTimer);
+            //intClockTimer = micros();
+            cnt++;
+            if (cnt % 10 == 0) {
+            }
+            
+            intClockTimer = micros() - diff;  //compensate for catching it late!
+            clockTick();
+            
+        }
+    }
+}
+
+
+/*void handleIntClock() {
     if (tapTimer > 0) {
         unsigned long NOW = millis();
         if (NOW - intClockTimer > clockStepTimer) {
@@ -354,6 +432,7 @@ void handleIntClock() {
         }
     }
 }
+*/
 
 void lightScroll() {
     if (millis() - waitTimer > 60) {
@@ -386,16 +465,6 @@ void clockTick() {
             oldExtClockPeriods[i] = oldExtClockPeriods[i-1];
         }
         oldExtClockPeriods[0] = extClockTimer - oldExtClockTimer;
-        /*
-        CompositeSerial.print(oldExtClockPeriods[3]);
-        CompositeSerial.print(" ");
-        CompositeSerial.print(oldExtClockPeriods[2]);
-        CompositeSerial.print(" ");
-        CompositeSerial.print(oldExtClockPeriods[1]);
-        CompositeSerial.print(" ");
-        CompositeSerial.print(oldExtClockPeriods[0]);
-        CompositeSerial.println(" ");
-        */
 
         // average them
         unsigned int periodsSum = 0;
@@ -447,7 +516,7 @@ int localTapTimer[4] = { 0, 0, 0, 0 };
 
 int aliveCounter = 0;
 
-
+int highestDiff = 0;
 
 void loop() {
     aliveCounter++;
@@ -463,7 +532,6 @@ void loop() {
     if (aliveCounter == 10000) {
         //u8g2.clearDisplay();
     }
-
     handlePage();
 }
 
@@ -534,6 +602,73 @@ void handleBlinks() {
     }
 }
 
-void saveData() {
+void saveData() { //this is what is called when save is clicked
+    //redirects to save page, save page calls "save" function
     page = 123;    //do the stuff on save page instead
 }
+
+void save() {
+    //save settingsValues
+    byte myAddress = 0;
+    for (int i = 0; i < 10; i++) {
+        EEPROM.write(myAddress + i, settingsValues[i]);
+    }
+
+    //save inversions
+    myAddress = 20;
+    for (int i = 0; i < 5; i++) {
+        EEPROM.write(myAddress + i, inversion[i]);
+    }
+
+    //save subDivs
+    myAddress = 30;
+    for (int i = 0; i < 4; i++) {
+        EEPROM.write(myAddress + i, clockDivisors[i]);
+    }
+
+    //save triplets
+    myAddress = 35;
+    for (int i = 0; i < 4; i++) {
+        EEPROM.write(myAddress + i, triplets[i]);
+    }
+
+    //flag settings a stored
+    EEPROM.write(100, 123);
+
+}
+
+void load() {
+    if (EEPROM.read(100) == 123) {//check if anything to load:
+        //load settingsvalues
+        byte myAddress = 0;
+        for (int i = 0; i < 10; i++) {
+            settingsValues[i] = EEPROM.read(myAddress + i);
+        }
+
+        //load inversions
+        myAddress = 20;
+        for (int i = 0; i < 5; i++) {
+            inversion[i] = EEPROM.read(myAddress + i);
+        }
+
+        //load subDivs
+        myAddress = 30;
+        for (int i = 0; i < 4; i++) {
+            clockDivisors[i] = EEPROM.read(myAddress + i);
+        }
+
+        //load triplets
+        myAddress = 35;
+        for (int i = 0; i < 4; i++) {
+            triplets[i] = EEPROM.read(myAddress + i);
+        }
+    }
+
+    applyIOsettings();  // some booleans need to be set based on clock input / output settings
+    for (int i = 0; i < 4; i++) {
+        setClockLengths(i);
+    }
+    
+                        // ALSO NEEDS TO APPLY TRIPLETS AND TIMESIGS!!!!
+}
+
