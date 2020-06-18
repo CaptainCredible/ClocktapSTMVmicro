@@ -121,9 +121,6 @@ byte oldIOSettings = 0;
 byte IOSettings = 0b00000010;
 
 
-bool sendDINclock = true;
-bool sendUSBclock = true;
-
 int currentSetting = 0;
 int encoderCount = 500;
 //#define tempo 0
@@ -405,9 +402,6 @@ void handleIntClock() {
     if (tapTimer > 0) {
         unsigned long NOW = micros();
         if (NOW - intClockTimer > clockStepTimer) {
- 
-
-
             diff = ((NOW - intClockTimer) - clockStepTimer);
             //intClockTimer = micros();
             cnt++;
@@ -481,10 +475,10 @@ void clockTick() {
 
 
 void sendMidiClockTick() {
-    if (sendDINclock) {
+    if (enableDINclockOUT) {
         HWMIDI.sendRealTime(midi::Clock);
     }
-    if (sendUSBclock) {
+    if (enableUSBclockOUT) {
         umidi.sendSync();
     }
     

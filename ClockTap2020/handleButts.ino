@@ -112,6 +112,7 @@ void applyIOsettings() {
 		enableDINclockOUT = false;
 		break;
 	}
+	
 }
 
 void handleButts() {
