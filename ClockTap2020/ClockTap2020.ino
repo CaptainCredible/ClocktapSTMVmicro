@@ -5,6 +5,11 @@
 */
 
 
+#define gate1pin PB0 // need to change these?
+#define gate2pin PA7 // add transistor on gate out?
+
+
+
 //#include <ButtonDebounce.h>
 
 #include <U8x8lib.h>
@@ -28,8 +33,6 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 #define ENC_DATA PB5
 #define BUTTON  PB9
 #define tapIn PA8
-//const byte littleButtPins[4] = { PB9, PA2, PA6, PB0 };
-//const byte bigButtPins[4] = { PB8, PB7,PB6, PA10 };
 const byte bigButtPins[4] = { PA2, PB4,PA15, PA10 };
 const byte rotaryClick = PB9;
 #define gateA PA3
@@ -64,13 +67,13 @@ char settingsNames[10][12] = {
                          "clock in", //0=auto, 1=USB 2=DIN 3=OFF
                          "clock out", //0 = both, 1=USB, 2=DIN
                          "foot mode", //0= tap, 1=resync
-                         "tapo cursor", //cursor to set inversion inverter
-                         "gate 1", //0 = always 1/1, 1 = slave to tapout 1
+                         "tap cursor", //cursor to set inversion inverter
+                         "gate 1", //0 = always 1/1, 1 = slave to tapout 1 ,5tap in
                          "gate 2",
-                         "unused",
+                         "gate sel", // select what gate to edit
                          "unused"
 };
-
+#define settingsValuesGateSelector 8
 #define settingsValueTempo 0
 #define settingsValueMenuCursor 1
 #define settingsValueClockIn 2
@@ -79,7 +82,6 @@ char settingsNames[10][12] = {
 #define settingsValueTapOutBITS 5
 #define settingsValueGate1 6
 #define settingsValueGate2 7
-
 #define ClockSettingBoth 0 
 #define ClockSettingUSB 1 
 #define ClockSettingDIN 2 
@@ -87,7 +89,7 @@ char settingsNames[10][12] = {
 
 int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
 int oldSettingsValues[10] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
-int settingsRanges[10] = { 667,7,4,4,2,5,0,0,0,0 };
+int settingsRanges[10] = { 667,7,4,4,2,5,6,6,2,0 };
 
 byte page = 0;
 

@@ -8,6 +8,7 @@ void handlePage() {
 		TIMETOSAVE = false;
 	}
 
+
 	switch (page) {
 	case 0:
 		displayOverviewPage();
@@ -44,9 +45,89 @@ void displayGateOutMenu() {
 	currentSetting = 6;
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
-	u8g2.drawStr(0, 50, "NOT YET IMPLEMENTED");
+	u8g2.drawStr(50, 10, "GATE");
 
+	
+	u8g2.setCursor(0, 40);
+	u8g2.print("gate 1");
+	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 50);
+	u8g2.print("gate 2");
+	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
  }
+
+void displayGate1Menu() {
+	currentSetting = 6;
+	u8g2.clearBuffer();
+	u8g2.setFont(u8g2_font_missingplanet_tr);
+	u8g2.drawStr(50, 10, "GATE 1");
+
+
+	u8g2.setCursor(0, 30);
+	u8g2.print("follow 1");
+	if (settingsValues[settingsValueGate1] == 1)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 40);
+	u8g2.print("follow 2");
+	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 50);
+	u8g2.print("follow 3");
+	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 60);
+	u8g2.print("follow 4");
+	if (settingsValues[settingsValueGate1] == 4)u8g2.print(" <=");
+
+	u8g2.setCursor(83, 50);
+	if (settingsValues[settingsValueGate1] == 5)u8g2.print("=> ");
+	u8g2.setCursor(100, 50);
+	u8g2.print("INPUT");
+
+	u8g2.setCursor(60, 60);
+	if (settingsValues[settingsValueGate1] == 0)u8g2.print("=> ");
+	u8g2.setCursor(75, 60);
+	u8g2.print("always 1/1");
+
+
+
+}
+
+void displayGate2Menu() {
+	currentSetting = 7;
+	u8g2.clearBuffer();
+	u8g2.setFont(u8g2_font_missingplanet_tr);
+	u8g2.drawStr(50, 10, "GATE 2");
+
+
+	u8g2.setCursor(0, 30);
+	u8g2.print("follow 1");
+	if (settingsValues[settingsValueGate1] == 1)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 40);
+	u8g2.print("follow 2");
+	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 50);
+	u8g2.print("follow 3");
+	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 60);
+	u8g2.print("follow 4");
+	if (settingsValues[settingsValueGate1] == 4)u8g2.print(" <=");
+
+	u8g2.setCursor(83, 50);
+	if (settingsValues[settingsValueGate1] == 5)u8g2.print("=> ");
+	u8g2.setCursor(100, 50);
+	u8g2.print("INPUT");
+
+	u8g2.setCursor(60, 60);
+	if (settingsValues[settingsValueGate1] == 0)u8g2.print("=> ");
+	u8g2.setCursor(75, 60);
+	u8g2.print("always 1/1");
+
+}
 
 void displayTapOutMenu() {
 	currentSetting = 5;
@@ -124,8 +205,12 @@ void displayFootModeMenu() {
 
 void displaySavePage() {
 	u8g2.clearBuffer();
-	u8g2.setFont(u8g2_font_DigitalDisco_tf);
-	u8g2.drawStr(0, 50, "SAVING");
+	u8g2.setFont(u8g2_font_open_iconic_check_6x_t);
+	u8g2.drawGlyph(40,50,64);
+	u8g2.setFont(u8g2_font_missingplanet_tr);
+	u8g2.drawStr(45,63,"SAVED");
+
+	//u8g2.drawStr(25, 50, "SAVING");
 	u8g2.sendBuffer();
 
 	save();
@@ -326,7 +411,7 @@ void displayFootMode() {
 	u8g2.setCursor(39, 64);
 	u8g2.println("foot: ");
 	if (settingsValues[settingsValueFootMode] == FOOTMODETAP) {
-		u8g2.print("TAP!");
+		u8g2.print("TAP");
 	}
 	else {
 		u8g2.print("SYNC");
