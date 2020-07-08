@@ -12,7 +12,7 @@ void handleRotaryPush() {
 	if (nowRotaryPush && !oldRotaryPush) {
 		oldRotaryPush = nowRotaryPush;
 		click = true;
-		clickTimer = millis() + 100;
+		clickTimer = millis() + 500;
 	}
 	if (!nowRotaryPush && millis() > clickTimer) { oldRotaryPush = false; }
 
@@ -20,10 +20,10 @@ void handleRotaryPush() {
 		switch (page) {
 		case 0:
 			page = 1;
-			settingsValues[1] = 0;
+			//settingsValues[1] = 0;
 			break;
-		
-		case 1: // we are selecting things in the menu
+
+		case 1: // we are selecting things in the main menu
 			if (settingsValues[1] == 1) { //SAVE BuTTON
 				TIMETOSAVE = true;
 				updateDisplay = true;
@@ -60,10 +60,24 @@ void handleRotaryPush() {
 				updateDisplay = true;
 			}
 			break;
-		case 6:
+		case 6:  // we are on gate select page
+
+			page = settingsValues[currentSetting] + 7; //make 0,1,2 select pages 7,8,9
+			updateDisplay = true;
+			break;
+		case 7:  // we are on gate1 page
+
 			page = 0;
 			updateDisplay = true;
-
+			break;
+		case 8:  // we are on gate2 page
+			page = 0;
+			updateDisplay = true;
+			break;
+		case 9:  // we are on gateIn page
+			page = 0;
+			updateDisplay = true;
+			break;
 		default:
 			break;
 		}
@@ -112,12 +126,13 @@ void applyIOsettings() {
 		enableDINclockOUT = false;
 		break;
 	}
-	
+
 }
 
 void handleButts() {
 	handleRotaryPush();
 	handleTapInput();
+	//handleGateInput();
 	for (int i = 0; i < 4; i++) {
 		oldBigButtStates[i] = bigButtStates[i];
 		if (bigDebounceReady[i]) {
@@ -149,7 +164,6 @@ void handleButts() {
 
 		if (bigButtStates[i]) {
 			if (millis() - tripTimer[i] > 300 && !flippedTrips[i]) {
-				//Serial.println(millis() - tripTimer[i]);
 				triplets[i] = !triplets[i];
 				flippedTrips[i] = true;
 				clockDivisors[i]--;
@@ -164,24 +178,80 @@ void handleButts() {
 					blink(i, 1);
 				}
 
-
-				for (int pop = 0; pop < 4; pop++) {
-					//Serial.print("triplets ");
-					//Serial.print(pop);
-					//Serial.print(" = ");
-					//Serial.println(triplets[pop]);
-				}
 			}
 		}
 	}
 }
 
+bool oldGateInState = false;
+bool gateInState = false;
+
+/*
+void handleGateInput() {
+	gateInState = digitalRead(gateInPin);
+	if (gateInState && !oldGateInState) { // if we jut went high
+		gateInTrig();
+		oldGateInState = gateInState;
+	}
+	else if (!gateInState && oldGateInState) { // if we went low
+		oldGateInState = gateInState;
+	}
+}
+*/
+
+
+unsigned long oldGateMicros = 0;
+
+void gateInTrig() {
+	if (settingsValues[settingsValueGateInMode] < 3) { // if the gate in mode requires us to calculate tempo 
+		//systick_disable();
+		
+		//umidi.sendStop();
+		//systick_enable();
+		
+        //CompositeSerial.print("I can send a lot of data as long as it is all sent as one like this.");
+		//CompositeSerial.print("5678");
+		unsigned long NOW = micros();
+		delta = NOW - oldGateMicros;
+		if (NOW - oldGateMicros < 1000000) { //if less than 3 sec since last tap
+			switch (settingsValues[settingsValueGateInMode]) {
+			case 0: //1p
+				clockStepTimer = delta / 6;
+				break;
+			case 1: //1/2p
+				clockStepTimer = delta / 3;
+				break;
+			case 2: //1/4p
+				clockStepTimer = delta / 1, 5;
+				break;
+			default:
+				break;
+			}
+
+			//if(settingsValues[settingsValueGateInMode] == 0) clockStepTimer = delta / 6;
+			//if (settingsValues[settingsValueGateInMode] == 1) clockStepTimer = delta / 6;
+
+
+			settingsValues[settingsValueTempo] = 15000000 / delta;
+		}
+		else { //try to do handlestart() manually here
+			//umidi.sendStart();
+			   //clockIncrement = -1;
+		//umidi.sendStop();
+		//umidi.sendStart();
+		//umidi.poll();
+		//HWMIDI.sendRealTime(midi::Stop);
+		//HWMIDI.sendRealTime(midi::Start);
+			//umidi.sendReset();
+		//handleStart();
+		asyncHandleStart = true;
+		}
+		oldGateMicros = NOW;
+	}
+}
+
 void handleTapInput() {
 	int pedIn = 4; //pedal pins position in debounce array
-
-
-
-
 	oldBigButtStates[pedIn] = bigButtStates[pedIn];
 	if (bigDebounceReady[pedIn]) {
 		bigButtStates[pedIn] = !digitalRead(tapIn);
@@ -211,25 +281,30 @@ void handleTapInput() {
 				intClock = true;
 			}
 			tripTimer[pedIn] = millis();
-			if (intClock) {
+			if (intClock && settingsValues[settingsValueFootMode] == FOOTMODETAP) {
+
 				lastTimeOfTap = timeOfTap;
 				timeOfTap = micros();
-				if (timeOfTap - lastTimeOfTap < 3000000) { //if less than 3 sec since last tap
+				if (timeOfTap - lastTimeOfTap < 2000000) { //if less than 3 sec since last tap
 					tapTimer = timeOfTap - lastTimeOfTap;
 					clockStepTimer = tapTimer / 24;
 					settingsValues[settingsValueTempo] = 60000000 / tapTimer;
-					//tempo = 60000 / tapTimer;
 					handleStart();
 				}
+			} if (settingsValues[settingsValueFootMode] == FOOTMODESYNC) {
+				handleStart();
+
 			}
 		}
 		if (millis() - tripTimer[pedIn] > 1000 && !pedalHold) {
 			pedalHold = true;
 			settingsValues[settingsValueFootMode]++;
-			settingsValues[settingsValueFootMode] % 2;
-		}
+			settingsValues[settingsValueFootMode] = settingsValues[settingsValueFootMode] % 2;
+			updateDisplay = true;
 
-	} else {
+		}
+	}
+	else {
 		pedalHold = false;
 	}
 }

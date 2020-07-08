@@ -31,7 +31,16 @@ void handlePage() {
 		displayTapOutMenu();
 		break;
 	case 6:
-		displayGateOutMenu();
+		displayGateMenu();
+		break;
+	case 7:
+		displayGate1Menu();
+		break;
+	case 8:
+		displayGate2Menu();
+		break;
+	case 9:
+		displayGateInMenu();
 		break;
 	default:
 		break;
@@ -41,21 +50,95 @@ void handlePage() {
 		u8g2.sendBuffer();					// transfer internal memory to the display
 	}
 }
-void displayGateOutMenu() {
-	currentSetting = 6;
+
+
+
+void displayMainMenu() {
+	u8g2.clearBuffer();
+	u8g2.setFont(u8g2_font_missingplanet_tr);
+	u8g2.drawStr(50, 10, "MENU");
+	//MENU ITEMS:  clock in, clock, out, Footmode, tap outputs, gate outputs, save
+	u8g2.setCursor(0, 20);
+	u8g2.print("midiclock in");
+	if (settingsValues[1] == 2)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 30);
+	u8g2.print("midiclock out");
+	if (settingsValues[1] == 3)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 40);
+	u8g2.print("footmode");
+	if (settingsValues[1] == 4)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 50);
+	u8g2.print("tap outs");
+	if (settingsValues[1] == 5)u8g2.print(" <=");
+
+	u8g2.setCursor(0, 60);
+	u8g2.print("gate in/out");
+	if (settingsValues[1] == 6)u8g2.print(" <=");
+
+	u8g2.setCursor(83, 50);
+	if (settingsValues[1] == 1)u8g2.print("=> ");
+	u8g2.setCursor(100, 50);
+	u8g2.print("save");
+
+	u8g2.setCursor(83, 60);
+	if (settingsValues[1] == 0)u8g2.print("=> ");
+	u8g2.setCursor(100, 60);
+	u8g2.print("exit");
+
+
+	updateDisplay = true;
+	//set rotary value to choose pageSelect
+	//display list of pages
+	//display cursor next to selection
+}
+
+
+
+void displayGateMenu() {
+	currentSetting = 8;
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(50, 10, "GATE");
-
-	
 	u8g2.setCursor(0, 40);
 	u8g2.print("gate 1");
-	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
-
+	if (settingsValues[settingsValueGateSelect] == 0)u8g2.print(" <=");
 	u8g2.setCursor(0, 50);
 	u8g2.print("gate 2");
-	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
+	if (settingsValues[settingsValueGateSelect] == 1)u8g2.print(" <=");
+	u8g2.setCursor(0, 60);
+	u8g2.print("gate in");
+	if (settingsValues[settingsValueGateSelect] == 2)u8g2.print(" <=");
  }
+
+void displayGateInMenu() {
+	byte tempOffset = 10;
+	byte xTempOffset = 25;
+	currentSetting = 9;
+	u8g2.clearBuffer();
+	u8g2.setFont(u8g2_font_missingplanet_tr);
+	u8g2.drawStr(40, 10, "GATE IN");
+	u8g2.setCursor(0 + xTempOffset, 20 + tempOffset);
+	u8g2.print("1p");
+	if (settingsValues[currentSetting] == 0)u8g2.print(" <=");
+	u8g2.setCursor(0 + xTempOffset, 35 + tempOffset);
+	u8g2.print("1/2p");
+	if (settingsValues[currentSetting] == 1)u8g2.print(" <=");
+	u8g2.setCursor(0 + xTempOffset, 50 + tempOffset);
+	u8g2.print("1/4p");
+	if (settingsValues[currentSetting] == 2)u8g2.print(" <=");
+	u8g2.setCursor(60 + xTempOffset, 20 + tempOffset);
+	u8g2.print("16p*");
+	if (settingsValues[currentSetting] == 3)u8g2.print(" <=");
+	u8g2.setCursor(60 + xTempOffset, 35 + tempOffset);
+	u8g2.print("48p RAW");
+	if (settingsValues[currentSetting] == 4)u8g2.print(" <=");
+	u8g2.setCursor(40,40);
+	u8g2.print("*no midi clock out");
+	
+}
 
 void displayGate1Menu() {
 	currentSetting = 6;
@@ -66,27 +149,27 @@ void displayGate1Menu() {
 
 	u8g2.setCursor(0, 30);
 	u8g2.print("follow 1");
-	if (settingsValues[settingsValueGate1] == 1)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate1] == 0)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 40);
 	u8g2.print("follow 2");
-	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate1] == 1)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 50);
 	u8g2.print("follow 3");
-	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 60);
 	u8g2.print("follow 4");
-	if (settingsValues[settingsValueGate1] == 4)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
 
 	u8g2.setCursor(83, 50);
-	if (settingsValues[settingsValueGate1] == 5)u8g2.print("=> ");
+	if (settingsValues[settingsValueGate1] == 4)u8g2.print("=> ");
 	u8g2.setCursor(100, 50);
-	u8g2.print("INPUT");
+	u8g2.print("sequence");
 
 	u8g2.setCursor(60, 60);
-	if (settingsValues[settingsValueGate1] == 0)u8g2.print("=> ");
+	if (settingsValues[settingsValueGate1] == 5)u8g2.print("=> ");
 	u8g2.setCursor(75, 60);
 	u8g2.print("always 1/1");
 
@@ -103,27 +186,27 @@ void displayGate2Menu() {
 
 	u8g2.setCursor(0, 30);
 	u8g2.print("follow 1");
-	if (settingsValues[settingsValueGate1] == 1)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate2] == 0)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 40);
 	u8g2.print("follow 2");
-	if (settingsValues[settingsValueGate1] == 2)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate2] == 1)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 50);
 	u8g2.print("follow 3");
-	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate2] == 2)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 60);
 	u8g2.print("follow 4");
-	if (settingsValues[settingsValueGate1] == 4)u8g2.print(" <=");
+	if (settingsValues[settingsValueGate2] == 3)u8g2.print(" <=");
 
 	u8g2.setCursor(83, 50);
-	if (settingsValues[settingsValueGate1] == 5)u8g2.print("=> ");
+	if (settingsValues[settingsValueGate2] == 4)u8g2.print("=> ");
 	u8g2.setCursor(100, 50);
-	u8g2.print("INPUT");
+	u8g2.print("sequence");
 
 	u8g2.setCursor(60, 60);
-	if (settingsValues[settingsValueGate1] == 0)u8g2.print("=> ");
+	if (settingsValues[settingsValueGate2] == 5)u8g2.print("=> ");
 	u8g2.setCursor(75, 60);
 	u8g2.print("always 1/1");
 
@@ -218,48 +301,6 @@ void displaySavePage() {
 	while (millis() < endSaveTime) {
 	}
 	//page = 1;
-}
-
-void displayMainMenu() {
-	u8g2.clearBuffer();
-	u8g2.setFont(u8g2_font_missingplanet_tr);
-	u8g2.drawStr(50, 10, "MENU");
-	//MENU ITEMS:  clock in, clock, out, Footmode, tap outputs, gate outputs, save
-	u8g2.setCursor(0, 20);
-	u8g2.print("clock in");
-	if (settingsValues[1] == 2)u8g2.print(" <=");
-
-	u8g2.setCursor(0, 30);
-	u8g2.print("clock out");
-	if (settingsValues[1] == 3)u8g2.print(" <=");
-
-	u8g2.setCursor(0, 40);
-	u8g2.print("footmode");
-	if (settingsValues[1] == 4)u8g2.print(" <=");
-
-	u8g2.setCursor(0, 50);
-	u8g2.print("tap outs");
-	if (settingsValues[1] == 5)u8g2.print(" <=");
-	
-	u8g2.setCursor(0, 60);
-	u8g2.print("gate outs");
-	if (settingsValues[1] == 6)u8g2.print(" <=");
-
-	u8g2.setCursor(83, 50);
-	if (settingsValues[1] == 1)u8g2.print("=> ");
-	u8g2.setCursor(100, 50);
-	u8g2.print("save");
-
-	u8g2.setCursor(83, 60);
-	if (settingsValues[1] == 0)u8g2.print("=> ");
-	u8g2.setCursor(100, 60);
-	u8g2.print("exit");
-
-
-	updateDisplay = true;
-	//set rotary value to choose pageSelect
-	//display list of pages
-	//display cursor next to selection
 }
 
 void displayInputMenu() {

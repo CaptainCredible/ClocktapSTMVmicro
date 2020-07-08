@@ -4,13 +4,12 @@
   Uses STM32DUINO and arpuss USB library (now included in STM32DUINO CORE), and MIDI library (by Francois Best)
 */
 
+#define fullClockLength 48
 
 #define gate1pin PB0 // need to change these?
 #define gate2pin PA7 // add transistor on gate out?
-
-
-
-//#include <ButtonDebounce.h>
+#define gateInPin PA9 //
+bool asyncHandleStart = false;
 
 #include <U8x8lib.h>
 #include <MIDI.h>
@@ -37,7 +36,7 @@ const byte bigButtPins[4] = { PA2, PB4,PA15, PA10 };
 const byte rotaryClick = PB9;
 #define gateA PA3
 #define gateB PA0
-const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using last two entries, lazy
+//const byte gateOuts[4] = { gateA, gateB, gateA, gateB }; // we are only using last two entries, lazy
 
 
 //VARIABLES
@@ -61,19 +60,22 @@ char tripSubDivStrings[6][6] = {
                          "32t"
 };
 
+int settingsValues[10] = { 120,0,0,0,0,0,1,1,1,0 };
+int settingsRanges[10] = { 667,7,4,4,2,5,6,6,3,6 };
+
 char settingsNames[10][12] = {
-                         "tempo",
-                         "menu cursor",
-                         "clock in", //0=auto, 1=USB 2=DIN 3=OFF
-                         "clock out", //0 = both, 1=USB, 2=DIN
-                         "foot mode", //0= tap, 1=resync
-                         "tap cursor", //cursor to set inversion inverter
-                         "gate 1", //0 = always 1/1, 1 = slave to tapout 1 ,5tap in
-                         "gate 2",
-                         "gate sel", // select what gate to edit
-                         "unused"
+                         "tempo",       //0
+                         "menu cursor", //1
+                         "clock in",    //2  0=auto, 1=USB 2=DIN 3=OFF
+                         "clock out",   //3  0 = both, 1=USB, 2=DIN
+                         "foot mode",   //4  0= tap, 1=resync
+                         "tap cursor",  //5  cursor to set inversion inverter
+                         "gate 1",      //6  0 = slave to tapout 1 , 5 = always 1/1
+                         "gate 2",      //7
+                         "gate sel",    //8  select what gate to edit
+                         "g in mode"    //9  set clockpulses per BPM //
 };
-#define settingsValuesGateSelector 8
+
 #define settingsValueTempo 0
 #define settingsValueMenuCursor 1
 #define settingsValueClockIn 2
@@ -86,11 +88,13 @@ char settingsNames[10][12] = {
 #define ClockSettingUSB 1 
 #define ClockSettingDIN 2 
 #define ClockSettingOFF 3 
+#define settingsValueGateSelect 8
+#define settingsValueGate1 6
+#define settingsValueGate2 7
+#define settingsValueGateInMode 9 //0=1p  1=1/2p  2=1/4p  3 = 16p RAW 4 = 48pRaw
 
-int settingsValues[10] = { 120,0,0,0,0,0,0,0,0,0 };
+
 int oldSettingsValues[10] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
-int settingsRanges[10] = { 667,7,4,4,2,5,6,6,2,0 };
-
 byte page = 0;
 
 #define FOOTMODETAP 0
@@ -107,11 +111,11 @@ SEND MIDICLOCK DIN   4
 
 */
 
-#define EXTCLOCKAUTOBIT 0
-#define EXTCLOCKUSBBIT 1
-#define EXTCLOCKDINBIT 2
-#define SENDUSBBIT 3
-#define SENDDINBIT 4
+//#define EXTCLOCKAUTOBIT 0
+//#define EXTCLOCKUSBBIT 1
+//#define EXTCLOCKDINBIT 2
+//#define SENDUSBBIT 3
+//#define SENDDINBIT 4
 
 //bool extClockAUto = true;
 //bool extUSBclock = false;
@@ -278,6 +282,7 @@ USBCompositeSerial CompositeSerial;
 // TO BE CALLED FROM SYSTICK INTERRUPT:
 void mySystick(void)
 {
+
     volatile static uint8_t ABs = 0;
     ABs = (ABs << 2) & 0x0f; //left 2 bits now contain the previous AB key read-out;
     ABs |= (digitalRead(ENC_CLK) << 1) | digitalRead(ENC_DATA);
@@ -325,19 +330,27 @@ bool click = false;
 
 
 void setup() {
+
+    //SCRIM
+    u8g2.begin();
+    u8g2.setFont(u8g2_font_crox5h_tf);
+    u8g2.drawStr(13, 40, "clockTAP");
+    u8g2.setFont(u8g2_font_DigitalDisco_tf);
+    u8g2.drawStr(70, 54, "v0.1");
+    u8g2.sendBuffer();
+
     //ROTARY ENCODER
     pinMode(ENC_CLK, INPUT_PULLUP);
     pinMode(ENC_DATA, INPUT_PULLUP);
     pinMode(rotaryClick,INPUT_PULLUP);
     encoderCount = 100;
-    systick_attach_callback(&mySystick); // attach encoder_read to the systick interrupt
+    
 
-    //USB
-    USBComposite.setProductId(0x0030);
-    USBComposite.setProductString("clockTap");
-    umidi.registerComponent();
-    CompositeSerial.registerComponent();
-    USBComposite.begin();
+    //GATE PINS
+    pinMode(gate1pin, OUTPUT);
+    pinMode(gate2pin, OUTPUT);
+    pinMode(gateInPin, INPUT);
+
     
     //DIN MIDI
     HWMIDI.setHandleClock(MIDIClockTick);
@@ -346,13 +359,7 @@ void setup() {
     HWMIDI.begin(MIDI_CHANNEL_OMNI); // Initiate MIDI communications, listen to all channels
     HWMIDI.turnThruOff();
     
-    //SCRIM
-    u8g2.begin();
-    u8g2.setFont(u8g2_font_crox5h_tf);
-    u8g2.drawStr(13, 40, "clockTAP");
-    u8g2.setFont(u8g2_font_DigitalDisco_tf);
-    u8g2.drawStr(70, 54, "v0.1");
-    u8g2.sendBuffer();
+    
     
     //TIMEKEEPING
     handleStart(); //sets up clockTimers and stuff
@@ -360,7 +367,7 @@ void setup() {
         pinMode(outs[i], OUTPUT);
         pinMode(LEDs[i], OUTPUT);
         pinMode(bigButtPins[i], INPUT_PULLUP);
-        pinMode(gateOuts[i], OUTPUT);
+        //pinMode(gateOuts[i], OUTPUT);
         digitalWrite(LEDs[i], HIGH);
         if (i > 0) {
             digitalWrite(LEDs[i - 1], LOW);
@@ -373,9 +380,15 @@ void setup() {
 
     //load settings
     load();
+    attachInterrupt(digitalPinToInterrupt(gateInPin), gateInTrig, RISING);
+    systick_attach_callback(&mySystick); // attach encoder_read to the systick interrupt
 
-    
-
+        //USB
+    USBComposite.setProductId(0x0030);
+    USBComposite.setProductString("clockTap");
+    umidi.registerComponent();
+    CompositeSerial.registerComponent();
+    USBComposite.begin();
 }
 
 void allLedsOn() {
@@ -399,7 +412,7 @@ void waiting4clock() {
 
 unsigned long diff = 0;
 unsigned long cnt = 1;
-
+bool timeToHandleClockTick = false;
 void handleIntClock() {
     if (tapTimer > 0) {
         unsigned long NOW = micros();
@@ -488,25 +501,31 @@ void sendMidiClockTick() {
 }
 
 void sendMidiStart() {
-    HWMIDI.sendRealTime(midi::Start);
-    umidi.sendStart();
+    if (enableDINclockOUT) {
+        HWMIDI.sendRealTime(midi::Stop);
+        HWMIDI.sendRealTime(midi::Start);
+    }
+    if (enableUSBclockOUT) {
+        umidi.sendStop();
+        umidi.sendStart();
+    }
 }
 
 void handleStop() {
-    //Serial.println("STOP RESET");
     isRunning = false;
     allLedsOff();
 }
 
-void handleStart() {  //sets up clockTimers and stuff
+void handleStart() {  //sets up clockTimers and stuff   RESETS SHIT
     notReceivedClockSinceBoot = false;
     isRunning = true;
-    clockIncrement = 0;
-    handleTapOut();
+    //intClockTimer = micros();  //compensate for catching it late!
+    clockIncrement = -1;
     sendMidiStart();
+    //clockTick();
 }
 
-byte tapBlinkLength = 3;
+byte tapBlinkLength = 2;
 int localTapTimer[4] = { 0, 0, 0, 0 };
 
 
@@ -514,7 +533,17 @@ int aliveCounter = 0;
 
 int highestDiff = 0;
 
+
+//bool sendDelta = false;
+int gtcnt = 0;
+unsigned long delta = 0;
+unsigned long oldMillis = 0;
+
 void loop() {
+    if (asyncHandleStart) {  //lets us send start messages and shit outside the interrupt
+    handleStart();
+    asyncHandleStart = false;
+    }
     aliveCounter++;
     if (notReceivedClockSinceBoot) {
       //  waiting4clock();
@@ -529,6 +558,9 @@ void loop() {
         //u8g2.clearDisplay();
     }
     handlePage();
+
+
+
 }
 
 
@@ -545,27 +577,19 @@ void setClockLengths(byte tap) {
 }
 
 void debounce(bool bigSmall, byte number) {
-    /*//Serial.print("deBouncing ");
-      //Serial.print(bigSmall);
-      //Serial.print(" - ");
-      //Serial.print(number);
-      //Serial.print(" - ");
-      //Serial.print(smallDebounceTimers[number]);
-      //Serial.print(" - ");
-      //Serial.println(millis());
-    */
+
 
     if (bigSmall) {  //if its a big button
 
         if (millis() - bigDebounceTimers[number] > debounceThresh) {
             bigDebounceReady[number] = true;
-            ////Serial.println("big debounce DONE");
+
         }
     }
     else {
         if (millis() - smallDebounceTimers[number] > debounceThresh) {
             smallDebounceReady[number] = true;
-            ////Serial.println("small debounce DONE");
+ 
         }
     } 
 }
@@ -588,7 +612,7 @@ void handleBlinks() {
             }
             else if (millis() - blinkTimers[i] < desiredBlinkPeriod) {
                 digitalWrite(LEDs[i], LOW);
-                //Serial.println(blinkCounter[i]);
+
             }
             else {
                 blinkCounter[i]--;
