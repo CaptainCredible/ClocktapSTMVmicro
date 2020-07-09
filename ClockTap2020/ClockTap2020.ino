@@ -61,12 +61,12 @@ char tripSubDivStrings[6][6] = {
 };
 
 int settingsValues[10] = { 120,0,0,0,0,0,1,1,1,0 };
-int settingsRanges[10] = { 667,7,4,4,2,5,6,6,3,6 };
+int settingsRanges[10] = { 667,7,5,4,2,5,6,6,3,4 };
 
 char settingsNames[10][12] = {
                          "tempo",       //0
                          "menu cursor", //1
-                         "clock in",    //2  0=auto, 1=USB 2=DIN 3=OFF
+                         "clock in",    //2  0=auto, 1=USB 2=DIN 3=OFF 4=CLK
                          "clock out",   //3  0 = both, 1=USB, 2=DIN
                          "foot mode",   //4  0= tap, 1=resync
                          "tap cursor",  //5  cursor to set inversion inverter
@@ -88,10 +88,11 @@ char settingsNames[10][12] = {
 #define ClockSettingUSB 1 
 #define ClockSettingDIN 2 
 #define ClockSettingOFF 3 
+#define ClockSettingCLK 4 
 #define settingsValueGateSelect 8
 #define settingsValueGate1 6
 #define settingsValueGate2 7
-#define settingsValueGateInMode 9 //0=1p  1=1/2p  2=1/4p  3 = 16p RAW 4 = 48pRaw
+#define settingsValueGateInMode 9 //0=2ppq  1=4ppq  2=24pRAW 3=48pRAW
 
 
 int oldSettingsValues[10] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
@@ -133,14 +134,15 @@ int encoderCount = 500;
 //int tempo = 120;
 int displayedTempo = 0;
 
+bool enableCLKin = false;
 bool enableUSBclockIN;
 bool enableDINclockIN;
 
 bool enableUSBclockOUT;
 bool enableDINclockOUT;
-
+bool alternate = false;
 bool intClock = true;
-long int timeSinceLastMidiMessage = 5000;
+long int timeSinceLastClockMessage = 5000;
 bool notReceivedClockSinceBoot = true;
 bool littleButtStates[4] = { true, true, true, true };
 bool oldLittleButtStates[4] = { false, false, false, false };
@@ -172,7 +174,7 @@ void MIDIClockTick() {
             notReceivedClockSinceBoot = false;
             clockTick();
         }
-        timeSinceLastMidiMessage = millis();
+        timeSinceLastClockMessage = millis();
     }
     
 }
@@ -185,7 +187,7 @@ void MIDIStop() {
         }
     }
     
-    timeSinceLastMidiMessage = millis();
+    timeSinceLastClockMessage = millis();
 }
 
 void MIDIStart() {
@@ -195,7 +197,7 @@ void MIDIStart() {
             notReceivedClockSinceBoot = false;
             handleStart();
         }
-        timeSinceLastMidiMessage = millis();
+        timeSinceLastClockMessage = millis();
     }
     
 }
@@ -207,7 +209,7 @@ void uMIDIClockTick() {
             notReceivedClockSinceBoot = false;
             clockTick();
         }
-        timeSinceLastMidiMessage = millis();
+        timeSinceLastClockMessage = millis();
     }
 }
 
@@ -217,7 +219,7 @@ void uMIDIStop() {
             notReceivedClockSinceBoot = false;
             handleStop();
         }
-        timeSinceLastMidiMessage = millis();
+        timeSinceLastClockMessage = millis();
     }
     
 }
@@ -229,7 +231,7 @@ void uMIDIStart() {
             notReceivedClockSinceBoot = false;
             handleStart();
         }
-        timeSinceLastMidiMessage = millis();
+        timeSinceLastClockMessage = millis();
     }
     
 }
@@ -482,7 +484,7 @@ void clockTick() {
         }
         tapTimer = periodsSum >> 2; // divide by four  for averaged resultaveraging
         settingsValues[settingsValueTempo] = 30000 / tapTimer;
-        
+        //CompositeSerial.print("x");
     }
     handleTapOut();
 }

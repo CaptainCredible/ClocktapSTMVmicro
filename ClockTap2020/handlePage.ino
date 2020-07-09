@@ -59,11 +59,11 @@ void displayMainMenu() {
 	u8g2.drawStr(50, 10, "MENU");
 	//MENU ITEMS:  clock in, clock, out, Footmode, tap outputs, gate outputs, save
 	u8g2.setCursor(0, 20);
-	u8g2.print("midiclock in");
+	u8g2.print("clock in");
 	if (settingsValues[1] == 2)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 30);
-	u8g2.print("midiclock out");
+	u8g2.print("clock out");
 	if (settingsValues[1] == 3)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 40);
@@ -121,22 +121,17 @@ void displayGateInMenu() {
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(40, 10, "GATE IN");
 	u8g2.setCursor(0 + xTempOffset, 20 + tempOffset);
-	u8g2.print("1p");
+	u8g2.print("2ppq");
 	if (settingsValues[currentSetting] == 0)u8g2.print(" <=");
 	u8g2.setCursor(0 + xTempOffset, 35 + tempOffset);
-	u8g2.print("1/2p");
+	u8g2.print("4ppq");
 	if (settingsValues[currentSetting] == 1)u8g2.print(" <=");
 	u8g2.setCursor(0 + xTempOffset, 50 + tempOffset);
-	u8g2.print("1/4p");
+	u8g2.print("24ppq");
 	if (settingsValues[currentSetting] == 2)u8g2.print(" <=");
 	u8g2.setCursor(60 + xTempOffset, 20 + tempOffset);
-	u8g2.print("16p*");
+	u8g2.print("48ppq");
 	if (settingsValues[currentSetting] == 3)u8g2.print(" <=");
-	u8g2.setCursor(60 + xTempOffset, 35 + tempOffset);
-	u8g2.print("48p RAW");
-	if (settingsValues[currentSetting] == 4)u8g2.print(" <=");
-	u8g2.setCursor(40,40);
-	u8g2.print("*no midi clock out");
 	
 }
 
@@ -310,7 +305,7 @@ void displayInputMenu() {
 	u8g2.drawStr(32, 10, "CLOCK INPUT");
 	
 	u8g2.setCursor(0, 20);
-	u8g2.print("BOTH");
+	u8g2.print("AUTO");
 	if(settingsValues[currentSetting] == ClockSettingBoth) u8g2.print(" <=");
 	
 	u8g2.setCursor(0, 30);
@@ -324,6 +319,10 @@ void displayInputMenu() {
 	u8g2.setCursor(0, 50);
 	u8g2.print("OFF");
 	if (settingsValues[currentSetting] == ClockSettingOFF) u8g2.print(" <=");
+
+	u8g2.setCursor(0, 60);
+	u8g2.print("CLK");
+	if (settingsValues[currentSetting] == ClockSettingCLK) u8g2.print(" <=");
 }
 
 void displayOutputMenu() {
@@ -380,7 +379,7 @@ void displayIOStatus() {
 	//LEFT SIDE, INPUTS
 	switch (settingsValues[settingsValueClockIn]) {
 	case ClockSettingBoth:
-		u8g2.drawStr(0, 10, "USB+DIN");
+		u8g2.drawStr(0, 10, "AUTO");
 		break;
 
 	case ClockSettingUSB:
@@ -394,6 +393,10 @@ void displayIOStatus() {
 	case ClockSettingOFF:
 		u8g2.drawStr(0, 10, "OFF");
 		break;
+	case ClockSettingCLK:
+		u8g2.drawStr(0, 10, "CLK");
+		break;
+
 	}
 	//RIGHT SIDE, OUTPUT
 	switch (settingsValues[settingsValueClockOut]) {

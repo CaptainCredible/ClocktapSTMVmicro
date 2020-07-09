@@ -92,18 +92,27 @@ void applyIOsettings() {
 	case ClockSettingBoth:
 		enableUSBclockIN = true;
 		enableDINclockIN = true;
+		enableCLKin = true;
 		break;
 	case ClockSettingDIN:
 		enableUSBclockIN = false;
 		enableDINclockIN = true;
+		enableCLKin = false;
 		break;
 	case ClockSettingUSB:
 		enableUSBclockIN = true;
 		enableDINclockIN = false;
+		enableCLKin = false;
 		break;
 	case ClockSettingOFF:
 		enableUSBclockIN = false;
 		enableDINclockIN = false;
+		enableCLKin = false;
+		break;
+	case ClockSettingCLK:
+		enableUSBclockIN = false;
+		enableDINclockIN = false;
+		enableCLKin = true;
 		break;
 	}
 
@@ -202,52 +211,67 @@ void handleGateInput() {
 
 unsigned long oldGateMicros = 0;
 
+int gateInCounter = -1;
+
 void gateInTrig() {
-	if (settingsValues[settingsValueGateInMode] < 3) { // if the gate in mode requires us to calculate tempo 
-		//systick_disable();
-		
-		//umidi.sendStop();
-		//systick_enable();
-		
-        //CompositeSerial.print("I can send a lot of data as long as it is all sent as one like this.");
-		//CompositeSerial.print("5678");
-		unsigned long NOW = micros();
-		delta = NOW - oldGateMicros;
-		if (NOW - oldGateMicros < 1000000) { //if less than 3 sec since last tap
-			switch (settingsValues[settingsValueGateInMode]) {
-			case 0: //1p
-				clockStepTimer = delta / 6;
-				break;
-			case 1: //1/2p
-				clockStepTimer = delta / 3;
-				break;
-			case 2: //1/4p
-				clockStepTimer = delta / 1, 5;
-				break;
-			default:
-				break;
+	unsigned long NOW = micros();
+	if (enableCLKin) {
+		if (settingsValues[settingsValueGateInMode] < 2) { // if the gate in mode requires us to calculate tempo 
+			intClock = true;
+			notReceivedClockSinceBoot = false;
+			timeSinceLastClockMessage = millis();
+
+			if (NOW - oldGateMicros < 1000000) { //if less than 3 sec since last tap
+				switch (settingsValues[settingsValueGateInMode]) {
+				case 0: //2ppq
+					gateInCounter = 0;
+					break;
+				case 1: //4ppq
+					gateInCounter = gateInCounter % 2;
+					break;
+				default:
+					break;
+				}
+				if (gateInCounter == 0) {
+					delta = NOW - oldGateMicros;
+					clockStepTimer = delta / 6;
+
+					oldGateMicros = NOW;
+				}
+				gateInCounter++;;
+
+			}
+			else { //try to do handlestart() manually here
+				asyncHandleStart = true;
+				gateInCounter == 0;
+				oldGateMicros = NOW;
 			}
 
-			//if(settingsValues[settingsValueGateInMode] == 0) clockStepTimer = delta / 6;
-			//if (settingsValues[settingsValueGateInMode] == 1) clockStepTimer = delta / 6;
-
-
-			settingsValues[settingsValueTempo] = 15000000 / delta;
 		}
-		else { //try to do handlestart() manually here
-			//umidi.sendStart();
-			   //clockIncrement = -1;
-		//umidi.sendStop();
-		//umidi.sendStart();
-		//umidi.poll();
-		//HWMIDI.sendRealTime(midi::Stop);
-		//HWMIDI.sendRealTime(midi::Start);
-			//umidi.sendReset();
-		//handleStart();
-		asyncHandleStart = true;
+		else { // we are using RAW input sync SHIT
+
+			intClock = false;
+			notReceivedClockSinceBoot = false;
+			if (settingsValues[settingsValueGateInMode] == 2) { //24P raw
+				alternate = true; //make it clocktick every pulse
+			}
+			else if (settingsValues[settingsValueGateInMode] == 3) { //48P raw)
+				alternate = !alternate; //make it clocktick every other pulse			
+			}
+			if (alternate) {
+				clockIncrement = clockIncrement % 48;
+				if (clockIncrement % 12 == 0) {
+					delta = NOW - oldGateMicros;
+					oldGateMicros = NOW;
+				}
+				clockTick();
+			}
+
 		}
-		oldGateMicros = NOW;
+		settingsValues[settingsValueTempo] = 30000000 / delta;
 	}
+	
+	
 }
 
 void handleTapInput() {
@@ -277,7 +301,7 @@ void handleTapInput() {
 	if (bigButtStates[pedIn]) {
 
 		if (!oldBigButtStates[pedIn]) {
-			if (timeSinceLastMidiMessage > 1000) {
+			if (timeSinceLastClockMessage > 1000) {
 				intClock = true;
 			}
 			tripTimer[pedIn] = millis();
