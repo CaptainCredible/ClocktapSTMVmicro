@@ -1,57 +1,92 @@
 
-uint16_t mySequences[4] = { 0b1000100010010010, 0b1110101011010110, 0b1111000000000000, 0b1001001001001001 };
+
 
 //  16 steps
 //  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #   
 //  ################################################
 //  48 clock increments
-byte seqCursor = 1;
+
 byte seqTimeSig = 6; //3 is 4/4, 2 is trip make this part of settingsvalues!
-bool seqGateState = false;
-bool oldSeqGateState = false;
+byte seqATimeSig = 6; //3 is 4/4, 2 is trip make this part of settingsvalues!
+byte seqBTimeSig = 6; //3 is 4/4, 2 is trip make this part of settingsvalues!
+bool seqAGateState = false;
+bool oldseqAGateState = false;
+bool seqBGateState = false;
+bool oldseqBGateState = false;
 bool aSeqIsRunning = false;
+bool bSeqIsRunning = false;
 
 void handleSeqGate() {
-    if (settingsValues[settingsValueGate1] == 4 || settingsValues[settingsValueGate2] == 4) {  //SKIP THIS IF NO SEQ IS RUNNING
+    if (settingsValues[settingsValueGate1] == 4) {  //SKIP THIS IF NO SEQ IS RUNNING
         aSeqIsRunning = true;
     }
     else {
         aSeqIsRunning = false;
     }
 
+    if (settingsValues[settingsValueGate2] == 4) {  //SKIP THIS IF NO SEQ IS RUNNING
+        bSeqIsRunning = true;
+    }
+    else {
+        bSeqIsRunning = false;
+    }
+
     if (aSeqIsRunning){
         uint16_t currentSeq = mySequences[0];  //make SEQ selectable
-        byte mySeqClock = clockIncrement % seqTimeSig;
-        if (mySeqClock == 0) {
-            if (bitRead(mySequences[0], 15 - seqCursor)) {
-                seqGateState = true;
+        //byte myASeqClock = clockIncrement % seqATimeSig;
+        byte myASeqClock = clockIncrement % 6;
+        if (myASeqClock == 0) {
+            if (bitRead(currentSeq, 15 - seqACursor)) {
+                seqAGateState = true;
             }
-            seqCursor++;
-            seqCursor = seqCursor % 16;
+            seqACursor++;
+            seqACursor = seqACursor % 16;
+            if (page == 10) { //seq edit1 page
+                updateDisplay = true;
+            }
+
         }
         else {
-            seqGateState = false;
+            seqAGateState = false;
         }
 
-        if (seqGateState && !oldSeqGateState) {
-            oldSeqGateState = true;
-            if (settingsValues[settingsValueGate1] == 4) {
+        if (seqAGateState && !oldseqAGateState) {
+            oldseqAGateState = true;
                 digitalWrite(gate1pin, HIGH);
-            }
-            if (settingsValues[settingsValueGate2] == 4) {
-                digitalWrite(gate2pin, HIGH);
-            }
-
-
-        } else if (oldSeqGateState && !seqGateState){
-            oldSeqGateState = false;
-            if (settingsValues[settingsValueGate1] == 4) {
+        }
+        if (oldseqAGateState && !seqAGateState){
+            oldseqAGateState = false;
                 digitalWrite(gate1pin, LOW);
+        }
+
+    }
+    if (bSeqIsRunning) {
+        uint16_t currentSeq = mySequences[1];  //make SEQ selectable
+        //byte myBSeqClock = clockIncrement % seqBTimeSig;
+        byte myBSeqClock = clockIncrement % 6;
+        if (myBSeqClock == 0) {
+            if (bitRead(currentSeq, 15 - seqBCursor)) {
+                seqBGateState = true;
             }
-            if (settingsValues[settingsValueGate2] == 4) {
-                digitalWrite(gate2pin, LOW);
+            seqBCursor++;
+            seqBCursor = seqBCursor % 16;
+            if (page == 11) { //seq edit1 page
+                updateDisplay = true;
             }
         }
+        else {
+            seqBGateState = false;
+        }
+
+        if (seqBGateState && !oldseqBGateState) {
+            oldseqBGateState = true;
+            digitalWrite(gate2pin, HIGH);
+        }
+        if (oldseqBGateState && !seqBGateState) {
+            oldseqBGateState = false;
+            digitalWrite(gate2pin, LOW);
+        }
+
 
     }
 }
@@ -127,36 +162,93 @@ void tapOutToGateOuts(bool onOff, byte tapNumber) {
     
 }
 
-bool basicGateOutBool = false;
-bool oldBasicGateOutBool = false;
+bool AbasicGateOutBool = false;
+bool BbasicGateOutBool = false;
+bool oldABasicGateOutBool = false;
+bool oldBBasicGateOutBool = false;
 void handleBasicGateOut() {
-    //
     byte myTapTimer = clockIncrement % fullClockLength;
-    if (myTapTimer < 12) {
-        basicGateOutBool = true;
-        
-    }
-    else {
-        basicGateOutBool = false;
-    }
-    if (basicGateOutBool && !oldBasicGateOutBool) {
-        oldBasicGateOutBool = true;
-        if (settingsValues[settingsValueGate1] == 5) {
-            digitalWrite(gate1pin, HIGH);
+    switch (settingsValues[settingsValueGate1]) {
+    case 5: //basic 1/1 2ppq
+        if (myTapTimer < 12) {
+            AbasicGateOutBool = true;
         }
-        if (settingsValues[settingsValueGate2] == 5) {
-            digitalWrite(gate1pin, HIGH);
+        else {
+            AbasicGateOutBool = false;
         }
+        break;
+    case 6: //4PPQ
+        if (myTapTimer%24 < 6) {
+            AbasicGateOutBool = true;
+            //CompositeSerial.print("X");
+        } else {
+            AbasicGateOutBool = false;
+        }
+        break;
+    case 7:  //24PPQ
+        if (myTapTimer % 2 == 0) {
+            AbasicGateOutBool = true;
+        }
+        else {
+            AbasicGateOutBool = false;
+        }
+    case 8:  //48PPQ
+        //hmm
+        break;
     }
 
-
-    else if (!basicGateOutBool && oldBasicGateOutBool) {
-        oldBasicGateOutBool = false;
-        if (settingsValues[settingsValueGate1] == 5) {
+    if (AbasicGateOutBool && !oldABasicGateOutBool) {
+        oldABasicGateOutBool = true;
+        if (settingsValues[settingsValueGate1] >= 5) {
+            digitalWrite(gate1pin, HIGH);
+        }
+    }
+    else if (!AbasicGateOutBool && oldABasicGateOutBool) {
+        oldABasicGateOutBool = false;
+        if (settingsValues[settingsValueGate1] >= 5) {
             digitalWrite(gate1pin, LOW);
         }
-        if (settingsValues[settingsValueGate2] == 5) {
-            digitalWrite(gate1pin, LOW);
+    }
+    
+    switch (settingsValues[settingsValueGate2]) {
+    case 5: //basic 1/1 2ppq
+        if (myTapTimer < 12) {
+            BbasicGateOutBool = true;
+        }
+        else {
+            BbasicGateOutBool = false;
+        }
+        break;
+    case 6: //4PPQ
+        if (myTapTimer & 24 < 6) {
+            BbasicGateOutBool = true;
+        }
+        else {
+            BbasicGateOutBool = false;
+        }
+        break;
+    case 7:  //24PPQ
+        if (myTapTimer % 2 == 0) {
+            BbasicGateOutBool = true;
+        }
+        else {
+            BbasicGateOutBool = false;
+        }
+    case 8:  //48PPQ
+        //hmm
+        break;
+    }
+    
+    if (BbasicGateOutBool && !oldBBasicGateOutBool) {
+        oldBBasicGateOutBool = true;
+        if (settingsValues[settingsValueGate2] >= 5) {
+            digitalWrite(gate2pin, HIGH);
+        }
+    }
+    else if (!BbasicGateOutBool && oldBBasicGateOutBool) {
+        oldBBasicGateOutBool = false;
+        if (settingsValues[settingsValueGate2] >= 5) {
+            digitalWrite(gate2pin, LOW);
         }
     }
 }

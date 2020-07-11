@@ -3,8 +3,18 @@
   CLOCK TO TAP
   Uses STM32DUINO and arpuss USB library (now included in STM32DUINO CORE), and MIDI library (by Francois Best)
 */
+//byte seqCursor = 1;
+byte seqACursor = 0;
+byte seqBCursor = 0;
 
 #define fullClockLength 48
+#define DEBUG 1
+#if DEBUG
+#define PRINTS(s)   { CompositeSerial.print(F(s)); }
+#define PRINT(x)  CompositeSerial.print(x)
+#define PRINTLN(x)  CompositeSerial.println(x)
+
+#endif
 
 #define gate1pin PB0 // need to change these?
 #define gate2pin PA7 // add transistor on gate out?
@@ -40,7 +50,7 @@ const byte rotaryClick = PB9;
 
 
 //VARIABLES
-
+uint16_t mySequences[4] = { 0b1000100010010010, 0b1110101011010110, 0b1111000000000000, 0b1001001001001001 };
 
 char subDivStrings[6][6] = {
                          "1",
@@ -59,11 +69,13 @@ char tripSubDivStrings[6][6] = {
                          "16t",
                          "32t"
 };
+#define numberOfSettingsValues 15
+int oldSettingsValues[15] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+int settingsValues[15] = { 120,0,0,0,0,0,1,1,1,0,0,0,0 };
+int settingsRanges[15] = { 667,9,5,4,2,5,8,8,3,4,5,17,17};
 
-int settingsValues[10] = { 120,0,0,0,0,0,1,1,1,0 };
-int settingsRanges[10] = { 667,7,5,4,2,5,6,6,3,4 };
 
-char settingsNames[10][12] = {
+char settingsNames[13][15] = {
                          "tempo",       //0
                          "menu cursor", //1
                          "clock in",    //2  0=auto, 1=USB 2=DIN 3=OFF 4=CLK
@@ -73,7 +85,10 @@ char settingsNames[10][12] = {
                          "gate 1",      //6  0 = slave to tapout 1 , 5 = always 1/1
                          "gate 2",      //7
                          "gate sel",    //8  select what gate to edit
-                         "g in mode"    //9  set clockpulses per BPM //
+                         "g in mode",    //9  set clockpulses per BPM //
+                         "seqSelex",
+                         "seqStepEdit",
+                         "seqStepEdit2"
 };
 
 #define settingsValueTempo 0
@@ -93,9 +108,9 @@ char settingsNames[10][12] = {
 #define settingsValueGate1 6
 #define settingsValueGate2 7
 #define settingsValueGateInMode 9 //0=2ppq  1=4ppq  2=24pRAW 3=48pRAW
+#define settingsValueseqSelex 10  //0-3 = sequences 4=edit 5=back
+#define settingsValueSeqStepEdit 12
 
-
-int oldSettingsValues[10] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
 byte page = 0;
 
 #define FOOTMODETAP 0
@@ -130,19 +145,19 @@ byte IOSettings = 0b00000010;
 
 int currentSetting = 0;
 int encoderCount = 500;
-//#define tempo 0
-//int tempo = 120;
+bool asyncCalculateTempo = false;
+bool asyncCalculateClockStepTimer = false;
 int displayedTempo = 0;
 
 bool enableCLKin = false;
 bool enableUSBclockIN;
 bool enableDINclockIN;
-
+bool nextSyncIsStart = false;
 bool enableUSBclockOUT;
 bool enableDINclockOUT;
 bool alternate = false;
 bool intClock = true;
-long int timeSinceLastClockMessage = 5000;
+long int timeOfLastClockMessage = 5000;
 bool notReceivedClockSinceBoot = true;
 bool littleButtStates[4] = { true, true, true, true };
 bool oldLittleButtStates[4] = { false, false, false, false };
@@ -159,12 +174,17 @@ byte waitLedSelect = 0;
 unsigned long waitTimer = 0;
 //int tapTimer = 0;
 unsigned long tapTimer = 0;
+unsigned long tempoDivisor = 0;
 unsigned long intClockTimer = 0;
 int tock = 0;
 bool overrideMidiClock = false;
 unsigned long oldExtClockTimer;
 unsigned long extClockTimer;
-
+//int gtcnt = 0;
+unsigned long delta = 0;
+unsigned long oldMillis = 0;
+unsigned int clockStepTimerDenominator = 6;
+unsigned int tempoNumerator = 30000000;
 
 
 void MIDIClockTick() {
@@ -174,7 +194,7 @@ void MIDIClockTick() {
             notReceivedClockSinceBoot = false;
             clockTick();
         }
-        timeSinceLastClockMessage = millis();
+        timeOfLastClockMessage = millis();
     }
     
 }
@@ -187,7 +207,7 @@ void MIDIStop() {
         }
     }
     
-    timeSinceLastClockMessage = millis();
+    timeOfLastClockMessage = millis();
 }
 
 void MIDIStart() {
@@ -197,7 +217,8 @@ void MIDIStart() {
             notReceivedClockSinceBoot = false;
             handleStart();
         }
-        timeSinceLastClockMessage = millis();
+
+        timeOfLastClockMessage = millis();
     }
     
 }
@@ -209,7 +230,7 @@ void uMIDIClockTick() {
             notReceivedClockSinceBoot = false;
             clockTick();
         }
-        timeSinceLastClockMessage = millis();
+        timeOfLastClockMessage = millis();
     }
 }
 
@@ -219,7 +240,7 @@ void uMIDIStop() {
             notReceivedClockSinceBoot = false;
             handleStop();
         }
-        timeSinceLastClockMessage = millis();
+        timeOfLastClockMessage = millis();
     }
     
 }
@@ -231,7 +252,7 @@ void uMIDIStart() {
             notReceivedClockSinceBoot = false;
             handleStart();
         }
-        timeSinceLastClockMessage = millis();
+        timeOfLastClockMessage = millis();
     }
     
 }
@@ -259,8 +280,6 @@ class myMidi : public USBMIDI {
     //virtual void handleReset(void);
 };
 
-myMidi umidi;
-USBCompositeSerial CompositeSerial;
 
 
 
@@ -330,6 +349,10 @@ const int debounceThresh = 10;
 bool inversion[5] = { false, false, false, false, false };
 bool click = false;
 
+myMidi umidi;
+
+USBCompositeSerial CompositeSerial;
+
 
 void setup() {
 
@@ -389,7 +412,12 @@ void setup() {
     USBComposite.setProductId(0x0030);
     USBComposite.setProductString("clockTap");
     umidi.registerComponent();
+
+#//if DEBUG
     CompositeSerial.registerComponent();
+#//endif // DEBUG
+
+    
     USBComposite.begin();
 }
 
@@ -483,7 +511,11 @@ void clockTick() {
             periodsSum += oldExtClockPeriods[i];
         }
         tapTimer = periodsSum >> 2; // divide by four  for averaged resultaveraging
-        settingsValues[settingsValueTempo] = 30000 / tapTimer;
+        tempoNumerator = 30000;
+        tempoDivisor = tapTimer;
+        asyncCalculateTempo = true;
+
+        //settingsValues[settingsValueTempo] = 30000 / tapTimer;
         //CompositeSerial.print("x");
     }
     handleTapOut();
@@ -492,11 +524,18 @@ void clockTick() {
 
 
 void sendMidiClockTick() {
-    if (enableDINclockOUT) {
-        HWMIDI.sendRealTime(midi::Clock);
-    }
-    if (enableUSBclockOUT) {
-        umidi.sendSync();
+
+    
+    if (!nextSyncIsStart) {
+        if (enableDINclockOUT) {
+            HWMIDI.sendRealTime(midi::Clock);
+        }
+        if (enableUSBclockOUT) {
+            umidi.sendSync();
+        }
+    } else {
+        sendMidiStart();
+        nextSyncIsStart = false;
     }
     
     
@@ -504,12 +543,19 @@ void sendMidiClockTick() {
 
 void sendMidiStart() {
     if (enableDINclockOUT) {
-        HWMIDI.sendRealTime(midi::Stop);
         HWMIDI.sendRealTime(midi::Start);
     }
     if (enableUSBclockOUT) {
-        umidi.sendStop();
         umidi.sendStart();
+    }
+}
+
+void sendMidiStop() {
+    if (enableDINclockOUT) {
+        HWMIDI.sendRealTime(midi::Stop);
+    }
+    if (enableUSBclockOUT) {
+        umidi.sendStop();
     }
 }
 
@@ -521,10 +567,12 @@ void handleStop() {
 void handleStart() {  //sets up clockTimers and stuff   RESETS SHIT
     notReceivedClockSinceBoot = false;
     isRunning = true;
-    //intClockTimer = micros();  //compensate for catching it late!
-    clockIncrement = -1;
+    clockIncrement = 47;
+    seqACursor = 0;
+    seqBCursor = 0;
+    sendMidiStop();
     sendMidiStart();
-    //clockTick();
+    //nextSyncIsStart = true;
 }
 
 byte tapBlinkLength = 2;
@@ -537,31 +585,45 @@ int highestDiff = 0;
 
 
 //bool sendDelta = false;
-int gtcnt = 0;
-unsigned long delta = 0;
-unsigned long oldMillis = 0;
 
+unsigned int loopCnt = 0;
+unsigned int loopCntCnt = 0;
+unsigned long lastRIGHTNOW = 0;
 void loop() {
+    loopCnt++;
+    if (loopCnt == 1000) {
+        //settingsValues[12] = 123;
+        unsigned long RIGHTNOW = millis();
+        unsigned int differoonie = RIGHTNOW - lastRIGHTNOW;
+        lastRIGHTNOW = RIGHTNOW;
+        loopCnt = 0;
+        for (byte i = 0; i < 15; i++) {
+            CompositeSerial.print(settingsValues[i]);
+            CompositeSerial.print(" ");
+        }
+        CompositeSerial.println(currentSetting);
+        loopCntCnt++;
+        //PRINTS(loopCntCnt);
+    }
+    
     if (asyncHandleStart) {  //lets us send start messages and shit outside the interrupt
     handleStart();
     asyncHandleStart = false;
     }
-    aliveCounter++;
-    if (notReceivedClockSinceBoot) {
-      //  waiting4clock();
+    if (asyncCalculateClockStepTimer) {
+        clockStepTimer = delta / clockStepTimerDenominator;
+        //CompositeSerial.println("pingo");
     }
-// handle int clock moved to systick!
+    if (asyncCalculateTempo) {  // make timer to only let this happen 4 times per sec ?
+        settingsValues[settingsValueTempo] = tempoNumerator / tempoDivisor;
+    }
+
     HWMIDI.read();
     umidi.poll();
     handleButts();
     handleRotaryEncoder();
-    //handleBlinks();
-    if (aliveCounter == 10000) {
-        //u8g2.clearDisplay();
-    }
+    //handleBlinks();    
     handlePage();
-
-
 
 }
 
@@ -632,9 +694,11 @@ void saveData() { //this is what is called when save is clicked
 void save() {
     //save settingsValues
     byte myAddress = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < numberOfSettingsValues; i++) {
         EEPROM.write(myAddress + i, settingsValues[i]);
     }
+
+    
 
     //save inversions
     myAddress = 20;
@@ -650,6 +714,12 @@ void save() {
 
     //save triplets
     myAddress = 35;
+    for (int i = 0; i < 4; i++) {
+        EEPROM.write(myAddress + i, triplets[i]);
+    }
+
+    //save sequences
+    myAddress = 40;
     for (int i = 0; i < 4; i++) {
         EEPROM.write(myAddress + i, triplets[i]);
     }

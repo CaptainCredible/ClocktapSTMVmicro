@@ -10,54 +10,152 @@ void handlePage() {
 
 
 	switch (page) {
+
 	case 0:
-		displayOverviewPage();
 		currentSetting = 0;
+		displayOverviewPage();
 		break;
+
+
 	case 1:
-		displayMainMenu();
+
 		currentSetting = 1;
+		if (updateDisplay) {
+			displayMainMenu();
+		}
 		break;
+
+
 	case 2:
-		displayInputMenu();
+		if (updateDisplay) {
+			currentSetting = 2;
+			displayInputMenu();
+		}
 		break;
+
+
 	case 3:
-		displayOutputMenu();
+		if (updateDisplay) {
+			currentSetting = 3;
+			displayOutputMenu();
+		}
 		break;
+
+
 	case 4:
-		displayFootModeMenu();
+		if (updateDisplay) {
+			currentSetting = 4;
+			displayFootModeMenu();
+		}
 			break;
+
+
 	case 5:
-		displayTapOutMenu();
+		if (updateDisplay) {
+			currentSetting = 5;
+			displayTapOutMenu();
+		}
 		break;
+
+
 	case 6:
-		displayGateMenu();
+		
+		if (updateDisplay) {
+			currentSetting = 8;
+			displayGateMenu();
+		}
 		break;
+
+
 	case 7:
-		displayGate1Menu();
+		if (updateDisplay) {
+			currentSetting = 6;
+			displayGate1Menu();
+		}
 		break;
+
+
 	case 8:
-		displayGate2Menu();
+		if (updateDisplay) {
+			currentSetting = 7;
+			displayGate2Menu();
+		}
 		break;
+
+
 	case 9:
-		displayGateInMenu();
+		if (updateDisplay) {
+			currentSetting = 9;
+			displayGateInMenu();
+		}
 		break;
+
+
+	case 10:
+		if (updateDisplay) {
+			currentSetting = settingsValueSeqStepEdit;
+			displaySeqEditor(0);
+		}
+		
+		break;
+
+
+	case 11:
+		if (updateDisplay) {
+			currentSetting = settingsValueSeqStepEdit;
+			displaySeqEditor(1);
+		}
+		
+		
 	default:
 		break;
+
+
 	}
 	if (updateDisplay) {
 		updateDisplay = false;
 		u8g2.sendBuffer();					// transfer internal memory to the display
+		//CompositeSerial.println("U");
 	}
 }
 
 
+void displayOverviewPage() {
+	
+	u8g2.clearBuffer();
+
+	//check for changes:  //maybe make it so it can handle clearing and updating TEMPO without updating the rest?
+
+	for (int i = 0; i < 4; i++) {
+		if (clockDivisors[i] != displayedClockDivisors[i]) { updateDisplay = true; }
+	}
+
+	if (displayedTempo != settingsValues[settingsValueTempo]) {
+		updateDisplay = true;
+		displayedTempo = settingsValues[settingsValueTempo];
+	}
+
+	if (IOSettings != oldIOSettings) {
+		updateDisplay = true;
+		oldIOSettings = IOSettings;
+	}
+
+	if (updateDisplay) {
+		displayFootMode();
+		displayTempo();
+		displayTimeSigs();
+		displayIOStatus();
+	}
+}
 
 void displayMainMenu() {
+
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(50, 10, "MENU");
 	//MENU ITEMS:  clock in, clock, out, Footmode, tap outputs, gate outputs, save
+	
+	
 	u8g2.setCursor(0, 20);
 	u8g2.print("clock in");
 	if (settingsValues[1] == 2)u8g2.print(" <=");
@@ -75,33 +173,42 @@ void displayMainMenu() {
 	if (settingsValues[1] == 5)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 60);
-	u8g2.print("gate in/out");
+	u8g2.print("g1 / g2 / clk");
 	if (settingsValues[1] == 6)u8g2.print(" <=");
 
 	u8g2.setCursor(83, 50);
-	if (settingsValues[1] == 1)u8g2.print("=> ");
-	u8g2.setCursor(100, 50);
-	u8g2.print("save");
-
-	u8g2.setCursor(83, 60);
 	if (settingsValues[1] == 0)u8g2.print("=> ");
-	u8g2.setCursor(100, 60);
+	u8g2.setCursor(100, 50);
 	u8g2.print("exit");
 
+	u8g2.setCursor(83, 60);
+	if (settingsValues[1] == 1)u8g2.print("=> ");
+	u8g2.setCursor(100, 60);
+	u8g2.print("save");
 
-	updateDisplay = true;
-	//set rotary value to choose pageSelect
-	//display list of pages
-	//display cursor next to selection
+	u8g2.setCursor(83, 30);
+	if (settingsValues[1] == 7)u8g2.print("=> ");
+	u8g2.setCursor(100, 30);
+	u8g2.print("g1seq");
+
+	u8g2.setCursor(83, 40);
+	if (settingsValues[1] == 8)u8g2.print("=> ");
+	u8g2.setCursor(100, 40);
+	u8g2.print("g2seq");
+
+
+
+
+	
 }
 
 
 
 void displayGateMenu() {
-	currentSetting = 8;
+	
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
-	u8g2.drawStr(50, 10, "GATE");
+	u8g2.drawStr(50, 10, "g1/g2/CLK");
 	u8g2.setCursor(0, 40);
 	u8g2.print("gate 1");
 	if (settingsValues[settingsValueGateSelect] == 0)u8g2.print(" <=");
@@ -109,14 +216,13 @@ void displayGateMenu() {
 	u8g2.print("gate 2");
 	if (settingsValues[settingsValueGateSelect] == 1)u8g2.print(" <=");
 	u8g2.setCursor(0, 60);
-	u8g2.print("gate in");
+	u8g2.print("CLK in");
 	if (settingsValues[settingsValueGateSelect] == 2)u8g2.print(" <=");
  }
 
 void displayGateInMenu() {
 	byte tempOffset = 10;
 	byte xTempOffset = 25;
-	currentSetting = 9;
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(40, 10, "GATE IN");
@@ -136,7 +242,6 @@ void displayGateInMenu() {
 }
 
 void displayGate1Menu() {
-	currentSetting = 6;
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(50, 10, "GATE 1");
@@ -158,22 +263,33 @@ void displayGate1Menu() {
 	u8g2.print("follow 4");
 	if (settingsValues[settingsValueGate1] == 3)u8g2.print(" <=");
 
-	u8g2.setCursor(83, 50);
+	u8g2.setCursor(62, 30);
 	if (settingsValues[settingsValueGate1] == 4)u8g2.print("=> ");
-	u8g2.setCursor(100, 50);
-	u8g2.print("sequence");
+	u8g2.setCursor(75, 30);
+	u8g2.print("sequencer");
 
-	u8g2.setCursor(60, 60);
+	u8g2.setCursor(60, 40);
 	if (settingsValues[settingsValueGate1] == 5)u8g2.print("=> ");
+	u8g2.setCursor(75, 40);
+	u8g2.print("2PPQ");
+	
+	u8g2.setCursor(60, 50);
+	if (settingsValues[settingsValueGate1] == 6)u8g2.print("=> ");
+	u8g2.setCursor(75, 50);
+	u8g2.print("4PPQ");
+	
+	u8g2.setCursor(60, 60);
+	if (settingsValues[settingsValueGate1] == 7)u8g2.print("=> ");
 	u8g2.setCursor(75, 60);
-	u8g2.print("always 1/1");
+	u8g2.print("24PPQ");
+
 
 
 
 }
 
 void displayGate2Menu() {
-	currentSetting = 7;
+	
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(50, 10, "GATE 2");
@@ -195,20 +311,29 @@ void displayGate2Menu() {
 	u8g2.print("follow 4");
 	if (settingsValues[settingsValueGate2] == 3)u8g2.print(" <=");
 
-	u8g2.setCursor(83, 50);
+	u8g2.setCursor(62, 30);
 	if (settingsValues[settingsValueGate2] == 4)u8g2.print("=> ");
-	u8g2.setCursor(100, 50);
-	u8g2.print("sequence");
+	u8g2.setCursor(75, 30);
+	u8g2.print("sequencer");
+
+	u8g2.setCursor(60, 40);
+	if (settingsValues[settingsValueGate2] == 5)u8g2.print("=> ");
+	u8g2.setCursor(75, 40);
+	u8g2.print("2PPQ");
+
+	u8g2.setCursor(60, 50);
+	if (settingsValues[settingsValueGate2] == 6)u8g2.print("=> ");
+	u8g2.setCursor(75, 50);
+	u8g2.print("4PPQ");
 
 	u8g2.setCursor(60, 60);
-	if (settingsValues[settingsValueGate2] == 5)u8g2.print("=> ");
+	if (settingsValues[settingsValueGate2] == 7)u8g2.print("=> ");
 	u8g2.setCursor(75, 60);
-	u8g2.print("always 1/1");
+	u8g2.print("24PPQ");
 
 }
 
 void displayTapOutMenu() {
-	currentSetting = 5;
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(40, 10, "tap outputs");
@@ -267,7 +392,6 @@ void displayTapOutMenu() {
 }
 
 void displayFootModeMenu() {
-	currentSetting = 4;
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(40, 10, "footmode");
@@ -299,7 +423,7 @@ void displaySavePage() {
 }
 
 void displayInputMenu() {
-	currentSetting = 2;
+	
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(32, 10, "CLOCK INPUT");
@@ -326,7 +450,7 @@ void displayInputMenu() {
 }
 
 void displayOutputMenu() {
-	currentSetting = 3;
+
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(29, 10, "CLOCK OUTPUT");
@@ -371,6 +495,55 @@ void displayTempo() {
 	u8g2.print(settingsValues[settingsValueTempo]);
 	u8g2.setCursor(0, 0);
 
+}
+
+
+
+void displaySeqEditor(byte whotSeq) {
+	
+	
+	u8g2.clearBuffer();
+	u8g2.setFont(u8g2_font_missingplanet_tr);
+	u8g2.setCursor(40, 10);
+	u8g2.print("g");
+	u8g2.print(whotSeq+1);
+	u8g2.print(" seq edit");
+	u8g2.setCursor(20, 30);
+	byte whotSeqCursor = seqACursor;
+	if (whotSeq == 1) whotSeqCursor = seqBCursor;
+	for (int i = 0; i < 16; i++) {
+		if (whotSeqCursor == i) {
+			u8g2.print("+");
+		}
+		else {
+			u8g2.print("-");
+		}
+	}
+	u8g2.setCursor(20, 50);
+
+	u8g2.setCursor(20, 40);
+	for (int i = 15; i >=0; i--) {
+		if (bitRead(mySequences[whotSeq], i)) {
+			u8g2.print("X");
+		}
+		else {
+			u8g2.print("-");
+		}
+	}
+	u8g2.setCursor(20, 50);
+	for (int i = 0; i < 16; i++) {
+		if (i == settingsValues[settingsValueSeqStepEdit]) {
+			u8g2.print("+");
+		}
+		else {
+			u8g2.print("-");
+		}
+	}
+	u8g2.setCursor(65, 60);
+	if(oldSettingsValues[settingsValueSeqStepEdit] == 16) u8g2.print("=>"); 
+	u8g2.setCursor(80, 60);
+	u8g2.print("done");
+	
 }
 
 void displayIOStatus() {
@@ -464,30 +637,3 @@ void displayFootMode() {
 
 }
 
-void displayOverviewPage() {
-
-	u8g2.clearBuffer();
-
-	//check for changes:
-
-	for (int i = 0; i < 4; i++) {
-		if (clockDivisors[i] != displayedClockDivisors[i]) { updateDisplay = true; }
-	}
-
-	if (displayedTempo != settingsValues[settingsValueTempo]) {
-		updateDisplay = true;
-		displayedTempo = settingsValues[settingsValueTempo];
-	}
-
-	if (IOSettings != oldIOSettings) {
-		updateDisplay = true;
-		oldIOSettings = IOSettings;
-	}
-
-	if (updateDisplay) {
-		displayFootMode();
-		displayTempo();
-		displayTimeSigs();
-		displayIOStatus();
-	}
-}

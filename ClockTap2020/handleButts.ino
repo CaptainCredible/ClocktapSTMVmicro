@@ -20,12 +20,22 @@ void handleRotaryPush() {
 		switch (page) {
 		case 0:
 			page = 1;
+			updateDisplay = true;
 			//settingsValues[1] = 0;
 			break;
 
 		case 1: // we are selecting things in the main menu
 			if (settingsValues[1] == 1) { //SAVE BuTTON
 				TIMETOSAVE = true;
+				page = 0;
+				updateDisplay = true;
+			}
+			else if (settingsValues[1] == 7) {
+				page = 10;
+				updateDisplay = true;
+			}
+			else if (settingsValues[1] == 8) {
+				page = 11;
 				updateDisplay = true;
 			}
 			else {
@@ -78,7 +88,43 @@ void handleRotaryPush() {
 			page = 0;
 			updateDisplay = true;
 			break;
+		case 10:  // we are on gateIn page
+			if (settingsValues[settingsValueSeqStepEdit] < 16) {
+				byte cursor = 15 - settingsValues[settingsValueSeqStepEdit];
+				if (bitRead(mySequences[0], cursor)) {
+					bitClear(mySequences[0], cursor);
+				}
+				else {
+					bitSet(mySequences[0], cursor);
+				}
+				
+			}
+			else {
+				page = 0;
+				
+			}
+			updateDisplay = true;
+			break;
+		case 11:  // we are on gateIn page
+			if (settingsValues[settingsValueSeqStepEdit] < 16) {
+				byte cursor = 15 - settingsValues[settingsValueSeqStepEdit];
+				if (bitRead(mySequences[1], cursor)) {
+					bitClear(mySequences[1], cursor);
+				}
+				else {
+					bitSet(mySequences[1], cursor);
+				}
+
+			}
+			else {
+				page = 0;
+
+			}
+			updateDisplay = true;
+			break;
+
 		default:
+			page = 0;
 			break;
 		}
 		click = false;
@@ -108,6 +154,7 @@ void applyIOsettings() {
 		enableUSBclockIN = false;
 		enableDINclockIN = false;
 		enableCLKin = false;
+		intClock = true;
 		break;
 	case ClockSettingCLK:
 		enableUSBclockIN = false;
@@ -219,8 +266,7 @@ void gateInTrig() {
 		if (settingsValues[settingsValueGateInMode] < 2) { // if the gate in mode requires us to calculate tempo 
 			intClock = true;
 			notReceivedClockSinceBoot = false;
-			timeSinceLastClockMessage = millis();
-
+			timeOfLastClockMessage = millis();
 			if (NOW - oldGateMicros < 1000000) { //if less than 3 sec since last tap
 				switch (settingsValues[settingsValueGateInMode]) {
 				case 0: //2ppq
@@ -234,8 +280,8 @@ void gateInTrig() {
 				}
 				if (gateInCounter == 0) {
 					delta = NOW - oldGateMicros;
-					clockStepTimer = delta / 6;
-
+					clockStepTimerDenominator = 6;
+					asyncCalculateClockStepTimer = true;
 					oldGateMicros = NOW;
 				}
 				gateInCounter++;;
@@ -252,6 +298,7 @@ void gateInTrig() {
 
 			intClock = false;
 			notReceivedClockSinceBoot = false;
+			timeOfLastClockMessage = millis();
 			if (settingsValues[settingsValueGateInMode] == 2) { //24P raw
 				alternate = true; //make it clocktick every pulse
 			}
@@ -268,7 +315,10 @@ void gateInTrig() {
 			}
 
 		}
-		settingsValues[settingsValueTempo] = 30000000 / delta;
+		//tempoNumerator = 30000000;
+		//asyncCalculateTempo = true;
+
+		
 	}
 	
 	
@@ -301,12 +351,14 @@ void handleTapInput() {
 	if (bigButtStates[pedIn]) {
 
 		if (!oldBigButtStates[pedIn]) {
-			if (timeSinceLastClockMessage > 1000) {
+			
+			if (millis() - timeOfLastClockMessage > 3000) {
 				intClock = true;
+				//CompositeSerial.println(timeOfLastClockMessage);
 			}
 			tripTimer[pedIn] = millis();
 			if (intClock && settingsValues[settingsValueFootMode] == FOOTMODETAP) {
-
+				//CompositeSerial.println("footmodeTap");
 				lastTimeOfTap = timeOfTap;
 				timeOfTap = micros();
 				if (timeOfTap - lastTimeOfTap < 2000000) { //if less than 3 sec since last tap
@@ -316,7 +368,8 @@ void handleTapInput() {
 					handleStart();
 				}
 			} if (settingsValues[settingsValueFootMode] == FOOTMODESYNC) {
-				handleStart();
+				handleStart(); // EEEEERM
+				//CompositeSerial.println("footmodeSync");
 
 			}
 		}
