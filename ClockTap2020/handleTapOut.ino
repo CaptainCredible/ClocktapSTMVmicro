@@ -16,6 +16,9 @@ bool oldseqBGateState = false;
 bool aSeqIsRunning = false;
 bool bSeqIsRunning = false;
 
+bool g1polarity = true;
+bool g2polarity = true;
+
 void handleSeqGate() {
     if (settingsValues[settingsValueGate1] == 4) {  //SKIP THIS IF NO SEQ IS RUNNING
         aSeqIsRunning = true;
@@ -180,7 +183,7 @@ void handleBasicGateOut() {
     case 6: //4PPQ
         if (myTapTimer%24 < 6) {
             AbasicGateOutBool = true;
-            //CompositeSerial.print("X");
+            
         } else {
             AbasicGateOutBool = false;
         }

@@ -7,11 +7,7 @@ void handleRotaryEncoder() {
         prevCount = oldSettingsValues[currentSetting];
         if (count != prevCount)
         {
-            /*
-            CompositeSerial.print(currentSetting);
-            CompositeSerial.print(" = ");
-            CompositeSerial.println(settingsValues[currentSetting]);
-            */
+            
             oldSettingsValues[currentSetting] = count;
             updateDisplay = true;
             if (currentSetting == settingsValueTempo) {    //checks if it needs to recalculate tempo

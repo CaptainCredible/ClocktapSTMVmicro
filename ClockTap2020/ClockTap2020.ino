@@ -8,7 +8,7 @@ byte seqACursor = 0;
 byte seqBCursor = 0;
 
 #define fullClockLength 48
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #define PRINTS(s)   { CompositeSerial.print(F(s)); }
 #define PRINT(x)  CompositeSerial.print(x)
@@ -72,7 +72,7 @@ char tripSubDivStrings[6][6] = {
 #define numberOfSettingsValues 15
 int oldSettingsValues[15] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
 int settingsValues[15] = { 120,0,0,0,0,0,1,1,1,0,0,0,0 };
-int settingsRanges[15] = { 667,9,5,4,2,5,8,8,3,4,5,17,17};
+int settingsRanges[15] = { 667,9,5,4,2,7,8,8,3,4,5,17,17};
 
 
 char settingsNames[13][15] = {
@@ -110,6 +110,9 @@ char settingsNames[13][15] = {
 #define settingsValueGateInMode 9 //0=2ppq  1=4ppq  2=24pRAW 3=48pRAW
 #define settingsValueseqSelex 10  //0-3 = sequences 4=edit 5=back
 #define settingsValueSeqStepEdit 12
+#define g1inversionslot = 4
+#define g2inversionslot = 5
+
 
 byte page = 0;
 
@@ -330,9 +333,9 @@ void mySystick(void)
 
 
 #define outA PA1 //A0
-#define outB PA4 //15
-#define outC PA5 //14
-#define outD PB1 //A3
+#define outB PB1 //15
+#define outC PA4 //14
+#define outD PA5 //A3
 byte outs[4] = { outA, outB, outC, outD };
 
 #define ledA PB15 //D3
@@ -346,12 +349,12 @@ unsigned long smallDebounceTimers[4] = { 0, 0, 0, 0 };
 bool bigDebounceReady[5] = { true, true, true, true, true };
 bool smallDebounceReady[4] = { true, true, true, true };
 const int debounceThresh = 10;
-bool inversion[5] = { false, false, false, false, false };
+bool inversion[6] = { false, false, false, false, false, false};
 bool click = false;
 
 myMidi umidi;
 
-USBCompositeSerial CompositeSerial;
+//USBCompositeSerial CompositeSerial;
 
 
 void setup() {
@@ -414,7 +417,7 @@ void setup() {
     umidi.registerComponent();
 
 #//if DEBUG
-    CompositeSerial.registerComponent();
+    //CompositeSerial.registerComponent();
 #//endif // DEBUG
 
     
@@ -515,8 +518,7 @@ void clockTick() {
         tempoDivisor = tapTimer;
         asyncCalculateTempo = true;
 
-        //settingsValues[settingsValueTempo] = 30000 / tapTimer;
-        //CompositeSerial.print("x");
+        
     }
     handleTapOut();
 }
@@ -591,28 +593,31 @@ unsigned int loopCntCnt = 0;
 unsigned long lastRIGHTNOW = 0;
 void loop() {
     loopCnt++;
+    //DEBUG
+    /*
     if (loopCnt == 1000) {
         //settingsValues[12] = 123;
         unsigned long RIGHTNOW = millis();
         unsigned int differoonie = RIGHTNOW - lastRIGHTNOW;
         lastRIGHTNOW = RIGHTNOW;
         loopCnt = 0;
+        
         for (byte i = 0; i < 15; i++) {
             CompositeSerial.print(settingsValues[i]);
             CompositeSerial.print(" ");
         }
         CompositeSerial.println(currentSetting);
         loopCntCnt++;
-        //PRINTS(loopCntCnt);
+      
     }
-    
+    */
     if (asyncHandleStart) {  //lets us send start messages and shit outside the interrupt
     handleStart();
     asyncHandleStart = false;
     }
     if (asyncCalculateClockStepTimer) {
         clockStepTimer = delta / clockStepTimerDenominator;
-        //CompositeSerial.println("pingo");
+        
     }
     if (asyncCalculateTempo) {  // make timer to only let this happen 4 times per sec ?
         settingsValues[settingsValueTempo] = tempoNumerator / tempoDivisor;
@@ -702,7 +707,7 @@ void save() {
 
     //save inversions
     myAddress = 20;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         EEPROM.write(myAddress + i, inversion[i]);
     }
 
@@ -721,7 +726,7 @@ void save() {
     //save sequences
     myAddress = 40;
     for (int i = 0; i < 4; i++) {
-        EEPROM.write(myAddress + i, triplets[i]);
+        EEPROM.write(myAddress + i, mySequences[i]);
     }
 
     //flag settings a stored
@@ -739,7 +744,7 @@ void load() {
 
         //load inversions
         myAddress = 20;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             inversion[i] = EEPROM.read(myAddress + i);
         }
 
@@ -754,7 +759,14 @@ void load() {
         for (int i = 0; i < 4; i++) {
             triplets[i] = EEPROM.read(myAddress + i);
         }
+        //loadSequences
+        myAddress = 40;
+        for (int i = 0; i < 4; i++) {
+            mySequences[i] = EEPROM.read(myAddress + i);
+        }
     }
+
+    
 
     applyIOsettings();  // some booleans need to be set based on clock input / output settings
     for (int i = 0; i < 4; i++) {
@@ -763,4 +775,5 @@ void load() {
     
                         // ALSO NEEDS TO APPLY TRIPLETS AND TIMESIGS!!!!
 }
+
 

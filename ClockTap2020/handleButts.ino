@@ -61,7 +61,7 @@ void handleRotaryPush() {
 			break;
 		case 5: //we are setting tapout inversion
 			//page = 0;
-			if (settingsValues[5] == 4) {
+			if (settingsValues[5] == 6) {
 				page = 0;
 				updateDisplay = true;
 			}
@@ -97,11 +97,9 @@ void handleRotaryPush() {
 				else {
 					bitSet(mySequences[0], cursor);
 				}
-				
 			}
 			else {
 				page = 0;
-				
 			}
 			updateDisplay = true;
 			break;
@@ -354,11 +352,11 @@ void handleTapInput() {
 			
 			if (millis() - timeOfLastClockMessage > 3000) {
 				intClock = true;
-				//CompositeSerial.println(timeOfLastClockMessage);
+				
 			}
 			tripTimer[pedIn] = millis();
 			if (intClock && settingsValues[settingsValueFootMode] == FOOTMODETAP) {
-				//CompositeSerial.println("footmodeTap");
+				
 				lastTimeOfTap = timeOfTap;
 				timeOfTap = micros();
 				if (timeOfTap - lastTimeOfTap < 2000000) { //if less than 3 sec since last tap
@@ -369,7 +367,7 @@ void handleTapInput() {
 				}
 			} if (settingsValues[settingsValueFootMode] == FOOTMODESYNC) {
 				handleStart(); // EEEEERM
-				//CompositeSerial.println("footmodeSync");
+				
 
 			}
 		}

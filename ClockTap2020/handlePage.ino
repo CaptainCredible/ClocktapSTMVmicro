@@ -53,7 +53,7 @@ void handlePage() {
 	case 5:
 		if (updateDisplay) {
 			currentSetting = 5;
-			displayTapOutMenu();
+			displayInversionsMenu();
 		}
 		break;
 
@@ -115,7 +115,7 @@ void handlePage() {
 	if (updateDisplay) {
 		updateDisplay = false;
 		u8g2.sendBuffer();					// transfer internal memory to the display
-		//CompositeSerial.println("U");
+		
 	}
 }
 
@@ -169,11 +169,11 @@ void displayMainMenu() {
 	if (settingsValues[1] == 4)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 50);
-	u8g2.print("tap outs");
+	u8g2.print("invert outputs");
 	if (settingsValues[1] == 5)u8g2.print(" <=");
 
 	u8g2.setCursor(0, 60);
-	u8g2.print("g1 / g2 / clk");
+	u8g2.print("g1/g2/clk");
 	if (settingsValues[1] == 6)u8g2.print(" <=");
 
 	u8g2.setCursor(83, 50);
@@ -186,14 +186,14 @@ void displayMainMenu() {
 	u8g2.setCursor(100, 60);
 	u8g2.print("save");
 
-	u8g2.setCursor(83, 30);
+	u8g2.setCursor(82, 30);
 	if (settingsValues[1] == 7)u8g2.print("=> ");
-	u8g2.setCursor(100, 30);
+	u8g2.setCursor(98, 30);
 	u8g2.print("g1seq");
 
-	u8g2.setCursor(83, 40);
+	u8g2.setCursor(82, 40);
 	if (settingsValues[1] == 8)u8g2.print("=> ");
-	u8g2.setCursor(100, 40);
+	u8g2.setCursor(98, 40);
 	u8g2.print("g2seq");
 
 
@@ -210,10 +210,10 @@ void displayGateMenu() {
 	u8g2.setFont(u8g2_font_missingplanet_tr);
 	u8g2.drawStr(50, 10, "g1/g2/CLK");
 	u8g2.setCursor(0, 40);
-	u8g2.print("gate 1");
+	u8g2.print("g1 out");
 	if (settingsValues[settingsValueGateSelect] == 0)u8g2.print(" <=");
 	u8g2.setCursor(0, 50);
-	u8g2.print("gate 2");
+	u8g2.print("g2 out");
 	if (settingsValues[settingsValueGateSelect] == 1)u8g2.print(" <=");
 	u8g2.setCursor(0, 60);
 	u8g2.print("CLK in");
@@ -333,14 +333,14 @@ void displayGate2Menu() {
 
 }
 
-void displayTapOutMenu() {
+void displayInversionsMenu() {
 	u8g2.clearBuffer();
 	u8g2.setFont(u8g2_font_missingplanet_tr);
-	u8g2.drawStr(40, 10, "tap outputs");
+	u8g2.drawStr(35, 10, "invert outputs");
 
-	u8g2.setCursor(0, 40);
+	u8g2.setCursor(0, 30);
 	if (settingsValues[5] == 0)u8g2.print("=> ");
-	u8g2.setCursor(17, 40);
+	u8g2.setCursor(17, 30);
 	u8g2.print("1");
 	if (inversion[0]) {
 		u8g2.print(" invert");
@@ -349,9 +349,9 @@ void displayTapOutMenu() {
 		u8g2.print(" normal");
 	}
 
-	u8g2.setCursor(0, 50);
+	u8g2.setCursor(0, 40);
 	if (settingsValues[5] == 1)u8g2.print("=> ");
-	u8g2.setCursor(17, 50);
+	u8g2.setCursor(17, 40);
 	u8g2.print("2");
 	if (inversion[1]) {
 		u8g2.print(" invert");
@@ -360,9 +360,9 @@ void displayTapOutMenu() {
 		u8g2.print(" normal");
 	}
 	
-	u8g2.setCursor(70, 40);
+	u8g2.setCursor(0, 50);
 	if (settingsValues[5] == 2)u8g2.print("=> ");
-	u8g2.setCursor(83, 40);
+	u8g2.setCursor(17, 50);
 	u8g2.print("3");
 	if (inversion[2]) {
 		u8g2.print(" invert");
@@ -372,9 +372,9 @@ void displayTapOutMenu() {
 	}
 
 
-	u8g2.setCursor(70, 50);
+	u8g2.setCursor(70, 30);
 	if (settingsValues[5] == 3)u8g2.print("=> ");
-	u8g2.setCursor(83, 50);
+	u8g2.setCursor(83, 30);
 	u8g2.print("4");
 	if (inversion[3]) {
 		u8g2.print(" invert");
@@ -382,9 +382,37 @@ void displayTapOutMenu() {
 	else {
 		u8g2.print(" normal");
 	}
-	u8g2.setCursor(70, 60);
+
+	u8g2.setCursor(64, 40);
 	if (settingsValues[5] == 4)u8g2.print("=> ");
-	u8g2.setCursor(83, 60);
+	u8g2.setCursor(77, 40);
+	u8g2.print("g1");
+	if (inversion[4]) {
+		u8g2.print(" invert");
+	}
+	else {
+		u8g2.print(" normal");
+	}
+
+	u8g2.setCursor(64, 50);
+	if (settingsValues[5] == 5)u8g2.print("=> ");
+	u8g2.setCursor(77, 50);
+	u8g2.print("g2");
+	if (inversion[5]) {
+		u8g2.print(" invert");
+	}
+	else {
+		u8g2.print(" normal");
+	}
+
+
+
+
+
+
+	u8g2.setCursor(90, 60);
+	if (settingsValues[5] == 6)u8g2.print("=> ");
+	u8g2.setCursor(100, 60);
 	u8g2.print("back");
 
 
